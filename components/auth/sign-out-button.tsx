@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { auth } from "@/lib/firebase/client";
+import { firebaseAuth } from "@/lib/firebase/client";
 import { signOut as firebaseSignOut } from "firebase/auth";
 import { clearAuthSession } from "@/app/auth/actions";
 import ConfirmDialog from "@/components/ui/confirm-dialog";
@@ -9,7 +9,7 @@ import { LogOut } from "lucide-react";
 
 async function handleSignOut() {
   await clearAuthSession();
-  await firebaseSignOut(auth);
+  await firebaseSignOut(firebaseAuth());
 }
 
 export default function SignOutButton() {

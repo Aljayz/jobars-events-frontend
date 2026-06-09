@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { auth } from "@/lib/firebase/client";
+import { firebaseAuth } from "@/lib/firebase/client";
 import { deleteUser } from "firebase/auth";
 import ConfirmDialog from "@/components/ui/confirm-dialog";
 import { AlertTriangle, Trash2 } from "lucide-react";
@@ -15,7 +15,7 @@ export default function DangerZone() {
   const handleDelete = async () => {
     setLoading(true);
     try {
-      const user = auth.currentUser;
+      const user = firebaseAuth().currentUser;
       if (!user) throw new Error("No user signed in");
       await deleteUser(user);
       router.push("/auth/login");

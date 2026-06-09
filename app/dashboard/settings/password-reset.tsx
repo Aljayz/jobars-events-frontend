@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { auth } from "@/lib/firebase/client";
+import { firebaseAuth } from "@/lib/firebase/client";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { KeyRound, CheckCircle, Loader2 } from "lucide-react";
 
@@ -14,7 +14,7 @@ export default function PasswordResetButton({ email }: { email: string }) {
     setLoading(true);
     setError("");
     try {
-      await sendPasswordResetEmail(auth, email);
+      await sendPasswordResetEmail(firebaseAuth(), email);
       setSent(true);
     } catch (e: unknown) {
       setError((e as Error).message ?? "Failed to send reset email");

@@ -4,7 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { User, CalendarPlus, X, Menu, LayoutDashboard } from 'lucide-react'
 import { usePathname, useRouter } from 'next/navigation'
-import { auth } from '@/lib/firebase/client'
+import { firebaseAuth } from '@/lib/firebase/client'
 import { onAuthStateChanged } from 'firebase/auth'
 import { Button } from '../ui/button'
 import { useScroll } from '@/lib/hooks/use-scroll'
@@ -25,7 +25,7 @@ function Header() {
   const pathname = usePathname()
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (user) => setIsLoggedIn(!!user))
+    const unsub = onAuthStateChanged(firebaseAuth(), (user) => setIsLoggedIn(!!user))
     return unsub
   }, [])
 

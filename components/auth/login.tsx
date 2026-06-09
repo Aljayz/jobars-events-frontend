@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Image from "next/image";
 import { Mail, KeyRound, Eye, EyeClosed } from "lucide-react";
-import { auth } from "@/lib/firebase/client";
+import { firebaseAuth } from "@/lib/firebase/client";
 import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { createSessionAndRedirect, clearAuthSession } from "@/app/auth/actions";
 
@@ -50,7 +50,7 @@ function Login() {
       const password = formData.get("password") as string;
 
       try {
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const userCredential = await signInWithEmailAndPassword(firebaseAuth(), email, password);
         const idToken = await userCredential.user.getIdToken();
         await createSessionAndRedirect(idToken);
         return undefined;
@@ -65,7 +65,7 @@ function Login() {
     setGooglePending(true);
     try {
       const provider = new GoogleAuthProvider();
-      const result = await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(firebaseAuth(), provider);
       const idToken = await result.user.getIdToken();
       await createSessionAndRedirect(idToken);
     } catch (error: unknown) {

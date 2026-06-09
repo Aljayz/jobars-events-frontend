@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/select";
 import TermConditionDialog from "./terms-condition/termConditionDialog";
 import { Dialog, DialogTrigger, DialogContent } from "../ui/dialog";
-import { auth } from "@/lib/firebase/client";
+import { firebaseAuth } from "@/lib/firebase/client";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { registerUser, createSessionAndRedirect } from "@/app/auth/actions";
 
@@ -258,7 +258,7 @@ function SignUp() {
       if (result.error) return { error: result.error };
 
       try {
-        const userCredential = await signInWithEmailAndPassword(auth, dataForm.email, dataForm.password);
+        const userCredential = await signInWithEmailAndPassword(firebaseAuth(), dataForm.email, dataForm.password);
         const idToken = await userCredential.user.getIdToken();
         await createSessionAndRedirect(idToken);
       } catch {
