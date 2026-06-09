@@ -2,33 +2,33 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { getAdminAuth } from "@/lib/firebase/admin";
+import { createSessionCookie, verifyIdToken, adminCreateUser, adminSetCustomClaims, adminRevokeRefreshTokens } from "@/lib/firebase/admin";
 import { createClient } from "@/utils/supabase/server";
 
 const SESSION_COOKIE = "__session";
 
 export async function createAuthSession(idToken: string) {
-  const expiresIn = 60 * 60 * 24 * 14 * 1000; // 14 days
-
-  const [sessionCookie, cookieStore] = await Promise.all([getAdminAuth().createSessionCookie(idToken, { expiresIn }), cookies()]);
+  const expiresIn = 60 * 60 * 24 * 14; // 14 days
+  const sessionCookie = await createSessionCookie(idToken);
+  const cookieStore = await cookies();
   cookieStore.set(SESSION_COOKIE, sessionCookie, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
-    maxAge: expiresIn / 1000,
+    maxAge: expiresIn,
     path: "/",
   });
 }
 
 export async function createSessionAndRedirect(idToken: string) {
-  const expiresIn = 60 * 60 * 24 * 14 * 1000; // 14 days
-
-  const [sessionCookie, cookieStore] = await Promise.all([getAdminAuth().createSessionCookie(idToken, { expiresIn }), cookies()]);
+  const expiresIn = 60 * 60 * 24 * 14; // 14 days
+  const sessionCookie = await createSessionCookie(idToken);
+  const cookieStore = await cookies();
   cookieStore.set(SESSION_COOKIE, sessionCookie, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
-    maxAge: expiresIn / 1000,
+    maxAge: expiresIn,
     path: "/",
   });
   redirect("/dashboard");
@@ -64,22 +64,18 @@ export async function registerUser(formData: FormData) {
   const birthdate = monthNum ? `${birthYear}-${monthNum}-${dayPadded}` : "";
 
   try {
-    const userRecord = await getAdminAuth().createUser({
-      email,
-      password,
-      displayName: fullName,
-    });
+    const uid = await adminCreateUser(email, password, fullName);
 
     const claims: Record<string, string | boolean> = {
       role: "external-client",
       client_mode: false,
       full_name: fullName,
     };
-    await getAdminAuth().setCustomUserClaims(userRecord.uid, claims);
+    await adminSetCustomClaims(uid, claims);
 
     const supabase = await createClient();
     await supabase.from("profiles").insert({
-      id: userRecord.uid,
+      id: uid,
       full_name: fullName,
       phone: phone || null,
       birthdate: birthdate || null,
@@ -98,8 +94,11 @@ export async function signOut() {
   const session = cookieStore.get(SESSION_COOKIE)?.value;
   if (session) {
     try {
-      const decoded = await getAdminAuth().verifySessionCookie(session);
-      await getAdminAuth().revokeRefreshTokens(decoded.uid);
+      const { verifySessionCookie } = await import("@/lib/firebase/admin");
+      const user = await verifySessionCookie(session);
+      if (user) {
+        await adminRevokeRefreshTokens(user.uid);
+      }
     } catch {
       // ignore
     }

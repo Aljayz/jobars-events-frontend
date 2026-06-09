@@ -1,5 +1,5 @@
 import { NextResponse, NextRequest } from "next/server";
-import { getAdminAuth } from "@/lib/firebase/admin";
+import { verifySessionCookie, adminGetUserByEmail, adminSetCustomClaims } from "@/lib/firebase/admin";
 
 export async function POST(request: NextRequest) {
   const sessionCookie = request.cookies.get("__session")?.value;
@@ -7,8 +7,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const caller = await getAdminAuth().verifySessionCookie(sessionCookie);
-  if (!caller || !["admin", "manager"].includes(caller.role as string)) {
+  const caller = await verifySessionCookie(sessionCookie);
+  if (!caller || !["admin", "manager"].includes(caller.role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -19,8 +19,11 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const targetUser = await getAdminAuth().getUserByEmail(email);
-    await getAdminAuth().setCustomUserClaims(targetUser.uid, { role });
+    const targetUser = await adminGetUserByEmail(email);
+    if (!targetUser) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+    await adminSetCustomClaims(targetUser.uid, { role });
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
