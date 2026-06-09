@@ -1,6 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 import { requireUser } from "@/lib/user";
-import { adminAuth } from "@/lib/firebase/admin";
+import { getAdminAuth } from "@/lib/firebase/admin";
 import { redirect } from "next/navigation";
 import { UserPlus } from "lucide-react";
 
@@ -43,7 +43,7 @@ export default async function ClientConversion() {
                   }),
                   supabase.from("profiles").update({ role: "employee" }).eq("id", client.id),
                 ]);
-                await adminAuth.setCustomUserClaims(client.id, {
+                await getAdminAuth().setCustomUserClaims(client.id, {
                   role: "employee", client_mode: true, full_name: "",
                 });
                 if (err1 || err2) { redirect("/dashboard/admin/clients?error=Conversion failed"); }

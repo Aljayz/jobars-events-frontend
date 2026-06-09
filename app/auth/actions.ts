@@ -2,7 +2,7 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { adminAuth } from "@/lib/firebase/admin";
+import { getAdminAuth } from "@/lib/firebase/admin";
 import { createClient } from "@/utils/supabase/server";
 
 const SESSION_COOKIE = "__session";
@@ -10,7 +10,7 @@ const SESSION_COOKIE = "__session";
 export async function createAuthSession(idToken: string) {
   const expiresIn = 60 * 60 * 24 * 14 * 1000; // 14 days
 
-  const [sessionCookie, cookieStore] = await Promise.all([adminAuth.createSessionCookie(idToken, { expiresIn }), cookies()]);
+  const [sessionCookie, cookieStore] = await Promise.all([getAdminAuth().createSessionCookie(idToken, { expiresIn }), cookies()]);
   cookieStore.set(SESSION_COOKIE, sessionCookie, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
@@ -23,7 +23,7 @@ export async function createAuthSession(idToken: string) {
 export async function createSessionAndRedirect(idToken: string) {
   const expiresIn = 60 * 60 * 24 * 14 * 1000; // 14 days
 
-  const [sessionCookie, cookieStore] = await Promise.all([adminAuth.createSessionCookie(idToken, { expiresIn }), cookies()]);
+  const [sessionCookie, cookieStore] = await Promise.all([getAdminAuth().createSessionCookie(idToken, { expiresIn }), cookies()]);
   cookieStore.set(SESSION_COOKIE, sessionCookie, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
@@ -64,7 +64,7 @@ export async function registerUser(formData: FormData) {
   const birthdate = monthNum ? `${birthYear}-${monthNum}-${dayPadded}` : "";
 
   try {
-    const userRecord = await adminAuth.createUser({
+    const userRecord = await getAdminAuth().createUser({
       email,
       password,
       displayName: fullName,
@@ -75,7 +75,7 @@ export async function registerUser(formData: FormData) {
       client_mode: false,
       full_name: fullName,
     };
-    await adminAuth.setCustomUserClaims(userRecord.uid, claims);
+    await getAdminAuth().setCustomUserClaims(userRecord.uid, claims);
 
     const supabase = await createClient();
     await supabase.from("profiles").insert({
@@ -98,8 +98,8 @@ export async function signOut() {
   const session = cookieStore.get(SESSION_COOKIE)?.value;
   if (session) {
     try {
-      const decoded = await adminAuth.verifySessionCookie(session);
-      await adminAuth.revokeRefreshTokens(decoded.uid);
+      const decoded = await getAdminAuth().verifySessionCookie(session);
+      await getAdminAuth().revokeRefreshTokens(decoded.uid);
     } catch {
       // ignore
     }
