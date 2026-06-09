@@ -1,35 +1,56 @@
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 
-const empty = { data: null, error: null };
-const emptyArr = { data: [], error: null };
-
-function dummyChain(): any {
-  return new Proxy(() => Promise.resolve(empty), {
-    get(_t, prop: string) {
-      if (prop === "then") return undefined;
-      if (prop === "select") return () => dummyChain();
-      if (prop === "limit") return () => Promise.resolve(emptyArr);
-      if (prop === "maybeSingle" || prop === "single") return () => Promise.resolve(empty);
-      if (prop === "order" || prop === "eq" || prop === "neq" || prop === "in" || prop === "filter" || prop === "or" || prop === "contains" || prop === "textSearch" || prop === "not" || prop === "gte" || prop === "lte" || prop === "gt" || prop === "lt" || prop === "is" || prop === "ilike" || prop === "like" || prop === "match" || prop === "range" || prop === "abortSignal") return () => dummyChain();
-      if (prop === "upsert" || prop === "insert" || prop === "update" || prop === "delete") return () => dummyChain();
-      return dummyChain();
-    },
-    apply() {
-      return Promise.resolve(empty);
-    },
-  });
+function mockResolve(result: unknown) {
+  return {
+    then(resolve: (v: unknown) => void) { resolve(result); },
+  };
 }
 
-function createDummyClient() {
-  return new Proxy({}, {
-    get(_t, prop: string) {
-      if (prop === "from") return () => dummyChain();
-      if (prop === "channel") return () => ({ on: () => ({ subscribe: () => ({ unsubscribe: () => {} }) }) });
-      if (prop === "removeChannel" || prop === "removeAllChannels") return () => {};
-      if (prop === "rpc") return () => Promise.resolve(empty);
-      return () => dummyChain();
-    },
-  }) as ReturnType<typeof createSupabaseClient>;
+const emptyResult = { data: null, error: null };
+const emptyArray = { data: [], error: null };
+
+function mockBuilder(): any {
+  const chain = () => mockBuilder();
+  chain.then = (resolve: (v: unknown) => void) => { resolve(emptyResult); };
+  chain.select = () => mockBuilder();
+  chain.insert = () => mockBuilder();
+  chain.update = () => mockBuilder();
+  chain.upsert = () => mockBuilder();
+  chain.delete = () => mockBuilder();
+  chain.eq = () => mockBuilder();
+  chain.neq = () => mockBuilder();
+  chain.gt = () => mockBuilder();
+  chain.gte = () => mockBuilder();
+  chain.lt = () => mockBuilder();
+  chain.lte = () => mockBuilder();
+  chain.like = () => mockBuilder();
+  chain.ilike = () => mockBuilder();
+  chain.is = () => mockBuilder();
+  chain.in = () => mockBuilder();
+  chain.not = () => mockBuilder();
+  chain.or = () => mockBuilder();
+  chain.contains = () => mockBuilder();
+  chain.textSearch = () => mockBuilder();
+  chain.filter = () => mockBuilder();
+  chain.match = () => mockBuilder();
+  chain.range = () => mockBuilder();
+  chain.abortSignal = () => mockBuilder();
+  chain.order = () => mockBuilder();
+  chain.limit = () => mockResolve(emptyArray);
+  chain.single = () => mockResolve(emptyResult);
+  chain.maybeSingle = () => mockResolve(emptyResult);
+  chain.rpc = () => mockResolve(emptyResult);
+  return chain;
+}
+
+function createDummyClient(): ReturnType<typeof createSupabaseClient> {
+  return {
+    from: () => mockBuilder(),
+    channel: () => ({ on: () => ({ subscribe: () => ({ unsubscribe: () => {} }) }) }),
+    removeChannel: () => {},
+    removeAllChannels: () => {},
+    rpc: () => mockResolve(emptyResult),
+  } as unknown as ReturnType<typeof createSupabaseClient>;
 }
 
 export function createClient() {
@@ -37,7 +58,6 @@ export function createClient() {
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!supabaseUrl || !supabaseAnonKey) {
     if (typeof window === "undefined" && process.env.NODE_ENV === "production") {
-      // Vercel build — env vars unavailable during prerender
       return createDummyClient();
     }
     throw new Error("NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY must be set");
