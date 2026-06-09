@@ -1,0 +1,51 @@
+{
+  "ignore": {
+    "overrides": [
+      {
+        "files": ["app/auth/actions.ts", "app/contact/actions.ts"],
+        "rules": ["react-doctor/server-auth-actions"]
+      },
+      {
+        "files": [
+          "app/dashboard/page.tsx",
+          "app/dashboard/admin/page.tsx",
+          "app/dashboard/staff/page.tsx",
+          "app/dashboard/admin/promotions/page.tsx",
+          "app/dashboard/hr/salary/page.tsx",
+          "app/dashboard/admin/location/page.tsx",
+          "app/dashboard/hr/cash-advance/page.tsx",
+          "app/dashboard/hr/attendance/page.tsx"
+        ],
+        "rules": ["react-doctor/rendering-hydration-mismatch-time"]
+      },
+      {
+        "files": [
+          "components/client-mode/toggle-button.tsx",
+          "components/admin/assign-staff-form.tsx",
+          "app/auth/layout.tsx",
+          "components/auth/signup.tsx",
+          "components/auth/sign-out-button.tsx",
+          "app/dashboard/admin/milestones/page.tsx",
+          "components/notifications/bell.tsx",
+          "components/auth/login.tsx"
+        ],
+        "rules": ["react-doctor/no-gray-on-colored-background"]
+      },
+      {
+        "files": [
+          "components/chat/chat-room-client.tsx",
+          "components/ui/flash-banner.tsx"
+        ],
+        "rules": ["react-doctor/no-cascading-set-state"]
+      },
+      {
+        "files": ["components/auth/signup.tsx"],
+        "rules": ["react-doctor/no-giant-component"]
+      },
+      {
+        "files": ["components/section/hero.tsx"],
+        "rules": ["react-doctor/design-no-space-on-flex-children"]
+      }
+    ]
+  }
+}
