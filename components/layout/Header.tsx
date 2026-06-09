@@ -59,6 +59,7 @@ function Header() {
               width={140}
               height={80}
               className="transition-all duration-500"
+              style={{ width: "auto", height: "auto" }}
             />
           </div>
         </Link>

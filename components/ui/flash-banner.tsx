@@ -5,14 +5,14 @@ import { useSearchParams } from "next/navigation";
 import { CheckCircle, XCircle, X } from "lucide-react";
 
 function FlashBannerInner() {
-  const { get } = useSearchParams();
+  const searchParams = useSearchParams();
   const [visible, setVisible] = useState(false);
   const [message, setMessage] = useState("");
   const [type, setType] = useState<"success" | "error">("success");
 
   useEffect(() => {
-    const error = get("error");
-    const success = get("success");
+    const error = searchParams.get("error");
+    const success = searchParams.get("success");
     if (error) {
       setMessage(error);
       setType("error");
@@ -22,7 +22,7 @@ function FlashBannerInner() {
       setType("success");
       setVisible(true);
     }
-  }, [get]);
+  }, [searchParams]);
 
   if (!visible) return null;
 
