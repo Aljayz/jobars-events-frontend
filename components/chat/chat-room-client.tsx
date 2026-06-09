@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { createClient } from "@/utils/supabase/client";
-import { sendMessage } from "@/app/dashboard/chat/actions";
+import { sendMessage } from "@/app/chat/actions";
 import { Send, CheckCheck } from "lucide-react";
 
 function getInitials(name: string) {

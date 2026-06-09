@@ -37,7 +37,7 @@ export default async function EmployeeOverview() {
             <Link href="/dashboard/employee/attendance" className="block rounded-lg px-4 py-2.5 text-sm text-gray-400 hover:bg-gray-800 hover:text-gray-200 transition-all">Clock in / Clock out</Link>
             <Link href="/dashboard/employee/salary" className="block rounded-lg px-4 py-2.5 text-sm text-gray-400 hover:bg-gray-800 hover:text-gray-200 transition-all">View expected salary</Link>
             <Link href="/dashboard/employee/cash-advance" className="block rounded-lg px-4 py-2.5 text-sm text-gray-400 hover:bg-gray-800 hover:text-gray-200 transition-all">Request cash advance</Link>
-            <Link href="/dashboard/chat" className="block rounded-lg px-4 py-2.5 text-sm text-gray-400 hover:bg-gray-800 hover:text-gray-200 transition-all">Open event chat</Link>
+            <Link href="/chat" className="block rounded-lg px-4 py-2.5 text-sm text-gray-400 hover:bg-gray-800 hover:text-gray-200 transition-all">Open event chat</Link>
           </div>
         </div>
       </div>

@@ -1,6 +1,5 @@
 import { createClient } from "@/utils/supabase/server";
 import { requireUser } from "@/lib/user";
-import { redirect } from "next/navigation";
 import Link from "next/link";
 import {
   CalendarCheck, Bell, MessageSquare, ListChecks, LayoutGrid,
@@ -151,7 +150,7 @@ export default async function DashboardHome() {
       color: "text-sky-400",
       bg: "from-sky-400/10 to-blue-500/5",
       border: "border-sky-400/20",
-      href: "/dashboard/chat",
+      href: "/chat",
     },
     {
       icon: isStaff ? ListChecks : isHR ? ClipboardList : isEmployee ? Users : LayoutGrid,
@@ -165,7 +164,7 @@ export default async function DashboardHome() {
   ];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 py-6">
       {/* Hero Greeting */}
       <div className="relative overflow-hidden rounded-2xl border border-gray-800 bg-gradient-to-br from-gray-900 via-gray-900/95 to-gray-950 p-6 sm:p-8">
         <div className="absolute -right-20 -top-20 size-64 rounded-full bg-yellow-400/5 blur-[100px]" />
@@ -254,7 +253,7 @@ export default async function DashboardHome() {
             )}
             <div className="border-t border-gray-800/50 pt-2 mt-2">
               <Link
-                href="/dashboard/chat"
+                href="/chat"
                 className="group flex items-center gap-4 rounded-xl border border-transparent px-4 py-3.5 transition-all hover:border-gray-700/50 hover:bg-gray-800/40"
               >
                 <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-gray-800/60 group-hover:bg-yellow-400/10 transition-colors">

@@ -22,7 +22,7 @@ export default async function ChatRoomPage({
     .eq("profile_id", user.uid)
     .single();
 
-  if (!membership) redirect("/dashboard/chat");
+  if (!membership) redirect("/chat");
 
   const [roomResult, messagesResult] = await Promise.all([
     supabase

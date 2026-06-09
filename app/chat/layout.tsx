@@ -38,7 +38,7 @@ export default async function ChatLayout({ children }: { children: ReactNode }) 
     <div className="flex h-screen bg-gray-950">
       <aside className="flex w-72 flex-col border-r border-gray-800 bg-gray-900/80 backdrop-blur">
         <div className="flex items-center justify-between border-b border-gray-800 px-5 py-4">
-          <Link href="/dashboard/chat" className="flex items-center gap-2 text-sm font-bold text-yellow-400">
+          <Link href="/chat" className="flex items-center gap-2 text-sm font-bold text-yellow-400">
             <MessageSquare className="size-4" />
             Messages
           </Link>
@@ -56,7 +56,7 @@ export default async function ChatLayout({ children }: { children: ReactNode }) 
             rooms.map((room, i) => (
               <Link
                 key={room.id}
-                href={`/dashboard/chat/${room.id}`}
+                href={`/chat/${room.id}`}
                 className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-gray-300 hover:bg-gray-800/80 transition-colors group"
               >
                 <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-gray-800 text-xs font-bold text-gray-400 group-hover:bg-gray-700 transition-colors">
