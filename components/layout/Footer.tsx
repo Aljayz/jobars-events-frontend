@@ -3,15 +3,19 @@ import Image from 'next/image'
 import Link from 'next/link'
 
 async function Footer() {
-  const supabase = await createClient()
-  const { data: locations } = await supabase
-    .from("business_locations")
-    .select("address, name")
-    .order("is_primary", { ascending: false })
-    .limit(1)
-
-  const primary = locations?.[0]
-  const address = primary?.address ?? "Bayugan City, Agusan del Sur"
+  let address = "Bayugan City, Agusan del Sur";
+  try {
+    const supabase = await createClient()
+    const { data: locations } = await supabase
+      .from("business_locations")
+      .select("address, name")
+      .order("is_primary", { ascending: false })
+      .limit(1)
+    const primary = locations?.[0]
+    if (primary?.address) address = primary.address;
+  } catch {
+    // env vars unavailable during build/prerender — use default
+  }
 
   return (
     <footer className='bg-gray-950'>
