@@ -17,8 +17,9 @@ export default function RootLayoutClient({
   const pathname = usePathname();
   const isAuthPage = authPaths.some((p) => pathname.startsWith(p));
   const isDashboardPage = pathname.startsWith(dashboardPath);
+  const isChatPage = pathname.startsWith("/chat");
 
-  if (isAuthPage || isDashboardPage) {
+  if (isAuthPage || isDashboardPage || isChatPage) {
     return <>{children}</>;
   }
 

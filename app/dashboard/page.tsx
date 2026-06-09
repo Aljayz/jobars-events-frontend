@@ -196,7 +196,7 @@ export default async function DashboardHome() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {statCards.map((stat) => (
           <Link
-            key={stat.href}
+            key={stat.label}
             href={stat.href}
             className={`group relative overflow-hidden rounded-xl border ${stat.border} bg-gradient-to-br ${stat.bg} p-5 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg`}
           >

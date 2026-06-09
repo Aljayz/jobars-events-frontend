@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { sendMessage } from "@/app/chat/actions";
-import { Send, CheckCheck } from "lucide-react";
+import { Send, CheckCheck, ArrowLeft } from "lucide-react";
+import Link from "next/link";
 
 function getInitials(name: string) {
   return name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
@@ -17,18 +18,33 @@ function nameColor(name: string) {
   return bubbleColors[Math.abs(hash) % bubbleColors.length];
 }
 
+const roleBadgeColors: Record<string, string> = {
+  "super-admin": "bg-rose-500/10 text-rose-400",
+  admin: "bg-yellow-400/10 text-yellow-400",
+  manager: "bg-yellow-400/10 text-yellow-400",
+  "human-resource": "bg-sky-400/10 text-sky-400",
+  staff: "bg-violet-400/10 text-violet-400",
+  employee: "bg-emerald-400/10 text-emerald-400",
+  "external-client": "bg-cyan-400/10 text-cyan-400",
+  client: "bg-cyan-400/10 text-cyan-400",
+};
+
 export default function ChatRoomClient({
   roomId,
   userId,
+  userRole,
   roomName,
   eventType,
   initialMessages,
+  participants,
 }: {
   roomId: string;
   userId: string;
+  userRole: string;
   roomName: string;
   eventType: string;
   initialMessages: Record<string, unknown>[];
+  participants: { profile_id: string; full_name: string; role: string }[];
 }) {
   const [messages, setMessages] = useState(initialMessages);
   const [presence, setPresence] = useState<Record<string, { user_id: string; full_name?: string }[]>>({});
@@ -40,6 +56,10 @@ export default function ChatRoomClient({
 
   const onlineUsers = Object.values(presence).flat().map((p) => p.user_id);
   const isOnline = (uid: string) => onlineUsers.includes(uid);
+
+  const participantMap = useRef(
+    new Map(participants.map((p) => [p.profile_id, { full_name: p.full_name, role: p.role }]))
+  );
 
   useEffect(() => {
     const channel = supabase.current.channel(`room:${roomId}`, {
@@ -76,7 +96,11 @@ export default function ChatRoomClient({
       })
       .subscribe(async (status) => {
         if (status === "SUBSCRIBED") {
-          await channel.track({ user_id: userId, online_at: new Date().toISOString() });
+          await channel.track({
+            user_id: userId,
+            full_name: participantMap.current.get(userId)?.full_name ?? "",
+            online_at: new Date().toISOString(),
+          });
         }
       });
 
@@ -92,7 +116,6 @@ export default function ChatRoomClient({
     const channel = supabase.current.channel(`room:${roomId}`);
     channel.send({ type: "broadcast", event: "typing", payload: { user_id: userId, full_name: "" } });
     typingTimeout.current = setTimeout(() => {
-      // typing stopped automatically
     }, 2000);
   }, [roomId, userId]);
 
@@ -109,25 +132,31 @@ export default function ChatRoomClient({
 
   return (
     <>
-      <div className="flex items-center justify-between border-b border-gray-800 px-6 py-3 bg-gray-900/50 backdrop-blur shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="flex size-9 items-center justify-center rounded-full bg-yellow-400/20 text-xs font-bold text-yellow-400">
+      <div className="flex items-center justify-between border-b border-gray-800 px-4 py-3 bg-gray-900/50 backdrop-blur shrink-0 sm:px-6">
+        <div className="flex items-center gap-3 min-w-0">
+          <Link
+            href="/chat"
+            className="flex items-center gap-1 text-xs text-gray-500 hover:text-yellow-400 transition-colors md:hidden shrink-0"
+          >
+            <ArrowLeft className="size-4" />
+          </Link>
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-yellow-400/20 text-xs font-bold text-yellow-400">
             {getInitials(roomName)}
           </div>
-          <div>
-            <h1 className="font-semibold text-gray-100">{roomName}</h1>
+          <div className="min-w-0">
+            <h1 className="font-semibold text-gray-100 text-sm truncate">{roomName}</h1>
             <div className="flex items-center gap-1.5">
               <span className={`size-1.5 rounded-full ${onlineUsers.length > 0 ? "bg-green-500" : "bg-gray-600"}`} />
-              <p className="text-xs text-gray-500 capitalize">
+              <p className="text-xs text-gray-500 capitalize truncate">
                 {onlineUsers.length > 0 ? `${onlineUsers.length} online` : eventType}
               </p>
             </div>
           </div>
         </div>
-        <div className="flex -gap-x-2">
+        <div className="flex -gap-x-2 shrink-0">
           {onlineUsers.slice(0, 5).map((uid) => (
             <div key={uid} className="size-7 rounded-full border-2 border-gray-900 bg-gray-700 flex items-center justify-center text-[10px] font-medium text-gray-300">
-              {uid.slice(0, 2).toUpperCase()}
+              {getInitials(participantMap.current.get(uid)?.full_name ?? uid)}
             </div>
           ))}
           {onlineUsers.length > 5 && (
@@ -138,7 +167,7 @@ export default function ChatRoomClient({
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6 scrollbar-thin">
+      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-6 sm:px-6">
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center text-gray-500">
             <div className="mb-3 flex size-16 items-center justify-center rounded-full bg-gray-800">
@@ -162,8 +191,9 @@ export default function ChatRoomClient({
             <div className="space-y-4">
               {msgs.map((msg, idx) => {
                 const isMe = msg.sender_id === userId;
-                const profile = msg.profiles as { full_name: string } | null;
+                const profile = msg.profiles as { full_name: string; role?: string } | null;
                 const senderName = profile?.full_name ?? "Unknown";
+                const senderRole = profile?.role ?? participantMap.current.get(msg.sender_id as string)?.role ?? "";
                 const prev = msgs[idx - 1];
                 const showSender = !isMe && (!prev || prev.sender_id !== msg.sender_id);
                 const time = new Date(msg.created_at as string);
@@ -177,9 +207,18 @@ export default function ChatRoomClient({
                       </div>
                     )}
                     {!showSender && !isMe && <div className="w-8 shrink-0" />}
-                    <div className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}>
-                      {showSender && <p className="mb-1 text-xs font-medium text-gray-400">{senderName}</p>}
-                      <div className={`max-w-md rounded-2xl px-4 py-2 ${
+                    <div className={`flex flex-col ${isMe ? "items-end" : "items-start"} max-w-[85%] sm:max-w-md`}>
+                      {showSender && (
+                        <div className="mb-1 flex items-center gap-2">
+                          <p className="text-xs font-medium text-gray-400">{senderName}</p>
+                          {senderRole && (
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${roleBadgeColors[senderRole] ?? "bg-gray-500/10 text-gray-400"}`}>
+                              {senderRole.replace("-", " ")}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                      <div className={`rounded-2xl px-4 py-2 ${
                         isMe ? "bg-yellow-400 text-black rounded-br-md" : "bg-gray-800 text-gray-200 rounded-bl-md"
                       }`}>
                         <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">{msg.content as string}</p>
@@ -215,7 +254,7 @@ export default function ChatRoomClient({
         <div ref={bottomRef} />
       </div>
 
-      <div className="border-t border-gray-800 px-6 py-4 bg-gray-900/50 backdrop-blur shrink-0">
+      <div className="border-t border-gray-800 px-4 py-4 bg-gray-900/50 backdrop-blur shrink-0 sm:px-6">
         <form
           action={async () => {
             if (!input.trim()) return;
@@ -245,7 +284,7 @@ export default function ChatRoomClient({
             className="flex items-center gap-2 rounded-xl bg-yellow-400 px-5 py-3 text-sm font-semibold text-black hover:bg-yellow-500 disabled:opacity-40 disabled:cursor-not-allowed transition-all active:scale-95"
           >
             <Send className="size-4" />
-            Send
+            <span className="hidden sm:inline">Send</span>
           </button>
         </form>
       </div>

@@ -14,7 +14,10 @@ interface NavItem {
   matchSubPaths?: boolean;
 }
 
+const dashboardItem: NavItem = { href: "/dashboard", label: "Dashboard", icon: "LayoutGrid" };
+
 const adminNav: NavItem[] = [
+  dashboardItem,
   { href: "/dashboard/admin", label: "Events Pipeline", icon: "LayoutGrid" },
   { href: "/dashboard/admin/milestones", label: "Milestones", icon: "ListChecks" },
   { href: "/dashboard/admin/uploads", label: "Proof Uploads", icon: "Upload" },
@@ -30,6 +33,7 @@ const adminNav: NavItem[] = [
 ];
 
 const hrNav: NavItem[] = [
+  dashboardItem,
   { href: "/dashboard/hr", label: "HR Overview", icon: "ClipboardList" },
   { href: "/dashboard/hr/employees", label: "Employees", icon: "Users" },
   { href: "/dashboard/hr/attendance", label: "Attendance", icon: "Clock" },
@@ -42,6 +46,7 @@ const hrNav: NavItem[] = [
 ];
 
 const staffNav: NavItem[] = [
+  dashboardItem,
   { href: "/dashboard/staff", label: "My Tasks", icon: "ListTodo" },
   { href: "/chat", label: "Event Chat", icon: "MessageSquare", matchSubPaths: true },
   { href: "/dashboard/notifications", label: "Notifications", icon: "Bell" },
@@ -49,6 +54,7 @@ const staffNav: NavItem[] = [
 ];
 
 const employeeNav: NavItem[] = [
+  dashboardItem,
   { href: "/dashboard/employee", label: "Overview", icon: "LayoutGrid" },
   { href: "/dashboard/employee/attendance", label: "Attendance", icon: "Clock" },
   { href: "/dashboard/employee/salary", label: "Salary", icon: "DollarSign" },
@@ -59,6 +65,7 @@ const employeeNav: NavItem[] = [
 ];
 
 const clientNav: NavItem[] = [
+  dashboardItem,
   { href: "/dashboard/client", label: "Timeline", icon: "ListChecks" },
   { href: "/dashboard/client/approvals", label: "Approvals", icon: "CheckSquare" },
   { href: "/dashboard/client/book", label: "Book Event", icon: "CalendarPlus" },
