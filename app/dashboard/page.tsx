@@ -61,8 +61,10 @@ function getCurrentDate(): string {
 }
 
 export default async function DashboardHome() {
-  const user = await requireUser();
-  const supabase = await createClient();
+  const [user, supabase] = await Promise.all([
+    requireUser(),
+    createClient(),
+  ]);
 
   const role = user.role;
   const clientMode = user.client_mode === true;
@@ -192,9 +194,9 @@ export default async function DashboardHome() {
 
       {/* Stat Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {statCards.map((stat, i) => (
+        {statCards.map((stat) => (
           <Link
-            key={i}
+            key={stat.href}
             href={stat.href}
             className={`group relative overflow-hidden rounded-xl border ${stat.border} bg-gradient-to-br ${stat.bg} p-5 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg`}
           >
@@ -227,11 +229,11 @@ export default async function DashboardHome() {
             <h2 className="text-sm font-semibold text-gray-200">Quick Actions</h2>
           </div>
           <div className="space-y-2">
-            {quickActions.map((action, i) => {
+            {quickActions.map((action) => {
               const Icon = action.icon;
               return (
                 <Link
-                  key={i}
+                  key={action.href}
                   href={action.href}
                   className="group flex items-center gap-4 rounded-xl border border-transparent px-4 py-3.5 transition-all hover:border-gray-700/50 hover:bg-gray-800/40"
                 >
