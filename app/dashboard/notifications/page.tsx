@@ -11,8 +11,7 @@ const typeIcons: Record<string, string> = {
 };
 
 export default async function NotificationsPage() {
-  const user = await requireUser();
-  const supabase = await createClient();
+  const [user, supabase] = await Promise.all([requireUser(), createClient()]);
 
   const { data: notifications } = await supabase
     .from("notifications")

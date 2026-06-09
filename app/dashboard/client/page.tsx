@@ -6,8 +6,7 @@ import EventRatingForm from "@/components/ratings/event-rating-form";
 import { CalendarDays, MapPin, Users, Wallet, ListChecks, Star } from "lucide-react";
 
 export default async function ClientTimeline() {
-  const user = await requireUser();
-  const supabase = await createClient();
+  const [user, supabase] = await Promise.all([requireUser(), createClient()]);
 
   const { data: bookings } = await supabase
     .from("events_bookings")

@@ -3,8 +3,7 @@ import { requireUser } from "@/lib/user";
 import { CalendarDays, MapPin, Briefcase, ListTodo } from "lucide-react";
 
 export default async function StaffTasks() {
-  const user = await requireUser();
-  const supabase = await createClient();
+  const [user, supabase] = await Promise.all([requireUser(), createClient()]);
 
   const { data: rawAssignments } = await supabase
     .from("staff_assignments")

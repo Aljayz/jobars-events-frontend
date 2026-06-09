@@ -32,8 +32,8 @@ export async function sendMessage(formData: FormData) {
 }
 
 export async function archiveChat(formData: FormData) {
-  const supabase = await createClient();
   const user = await requireUser();
+  const supabase = await createClient();
   const chatRoomId = formData.get("chatRoomId") as string;
 
   await supabase
@@ -46,8 +46,8 @@ export async function archiveChat(formData: FormData) {
 }
 
 export async function unarchiveChat(formData: FormData) {
-  const supabase = await createClient();
   const user = await requireUser();
+  const supabase = await createClient();
   const chatRoomId = formData.get("chatRoomId") as string;
 
   await supabase
@@ -60,8 +60,8 @@ export async function unarchiveChat(formData: FormData) {
 }
 
 export async function leaveChat(formData: FormData) {
-  const supabase = await createClient();
   const user = await requireUser();
+  const supabase = await createClient();
   const chatRoomId = formData.get("chatRoomId") as string;
 
   await supabase

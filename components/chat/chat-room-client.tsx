@@ -52,7 +52,9 @@ export default function ChatRoomClient({
   const [input, setInput] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
   const typingTimeout = useRef<ReturnType<typeof globalThis.setTimeout> | null>(null);
-  const supabase = useRef(createClient());
+  const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null);
+  if (supabaseRef.current === null) supabaseRef.current = createClient();
+  const supabaseClient = supabaseRef.current;
 
   const onlineUsers = Object.values(presence).flat().map((p) => p.user_id);
   const isOnline = (uid: string) => onlineUsers.includes(uid);
@@ -62,7 +64,7 @@ export default function ChatRoomClient({
   );
 
   useEffect(() => {
-    const channel = supabase.current.channel(`room:${roomId}`, {
+    const channel = supabaseClient.channel(`room:${roomId}`, {
       config: { broadcast: { self: false } },
     });
 
@@ -113,7 +115,7 @@ export default function ChatRoomClient({
 
   const handleTyping = useCallback(() => {
     if (typingTimeout.current) clearTimeout(typingTimeout.current);
-    const channel = supabase.current.channel(`room:${roomId}`);
+    const channel = supabaseClient.channel(`room:${roomId}`);
     channel.send({ type: "broadcast", event: "typing", payload: { user_id: userId, full_name: "" } });
     typingTimeout.current = setTimeout(() => {
     }, 2000);

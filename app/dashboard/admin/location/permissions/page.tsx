@@ -4,8 +4,7 @@ import { redirect } from "next/navigation";
 import { Shield } from "lucide-react";
 
 export default async function LocationPermissions() {
-  const user = await requireUser();
-  const supabase = await createClient();
+  const [user, supabase] = await Promise.all([requireUser(), createClient()]);
 
   const [managersRes, permissionsRes] = await Promise.all([
     supabase.from("profiles").select("id, full_name, email").eq("role", "manager"),
@@ -51,8 +50,7 @@ export default async function LocationPermissions() {
                 ) : (
                   <form action={async () => {
                     "use server";
-                    const user = await requireUser();
-                    const supabase = await createClient();
+                    const [user, supabase] = await Promise.all([requireUser(), createClient()]);
                     const { error } = await supabase.from("permanent_location_permissions").insert({ manager_id: mgr.id, granted_by: user.uid });
                     if (error) { redirect("/dashboard/admin/location/permissions"); }
                     redirect("/dashboard/admin/location/permissions");

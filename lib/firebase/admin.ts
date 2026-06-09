@@ -24,7 +24,7 @@ export interface FirebaseUser {
   email_verified: boolean;
 }
 
-export function mapFirebaseUser(decoded: DecodedIdToken): FirebaseUser {
+function mapFirebaseUser(decoded: DecodedIdToken): FirebaseUser {
   return {
     uid: decoded.uid,
     email: decoded.email ?? null,

@@ -5,8 +5,7 @@ import { redirect } from "next/navigation";
 import { UserPlus } from "lucide-react";
 
 export default async function ClientConversion() {
-  const user = await requireUser();
-  const supabase = await createClient();
+  const [user, supabase] = await Promise.all([requireUser(), createClient()]);
 
   const [clientsRes, conversionsRes] = await Promise.all([
     supabase.from("profiles").select("id, full_name, email, created_at").eq("role", "external-client").order("full_name"),
@@ -35,8 +34,7 @@ export default async function ClientConversion() {
               </div>
               <form action={async () => {
                 "use server";
-                const user = await requireUser();
-                const supabase = await createClient();
+                const [user, supabase] = await Promise.all([requireUser(), createClient()]);
                 const [{ error: err1 }, { error: err2 }] = await Promise.all([
                   supabase.from("client_conversion_requests").insert({
                     client_id: client.id,

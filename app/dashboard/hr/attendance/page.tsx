@@ -4,8 +4,7 @@ import { redirect } from "next/navigation";
 import { CheckCircle } from "lucide-react";
 
 export default async function AttendanceManagement() {
-  const user = await requireUser();
-  const supabase = await createClient();
+  const [user, supabase] = await Promise.all([requireUser(), createClient()]);
 
   const { data: logs } = await supabase
     .from("attendance_logs")

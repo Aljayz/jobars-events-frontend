@@ -6,8 +6,7 @@ import { createNotification } from "@/utils/notifications/actions";
 import { requireUser } from "@/lib/user";
 
 export async function addServiceToBooking(formData: FormData) {
-  const supabase = await createClient();
-  const user = await requireUser();
+  const [user, supabase] = await Promise.all([requireUser(), createClient()]);
   const bookingId = formData.get("bookingId") as string;
   const serviceId = formData.get("serviceId") as string;
 
@@ -21,8 +20,7 @@ export async function addServiceToBooking(formData: FormData) {
 }
 
 export async function removeServiceFromBooking(formData: FormData) {
-  const supabase = await createClient();
-  const user = await requireUser();
+  const [user, supabase] = await Promise.all([requireUser(), createClient()]);
   const bookingServiceId = formData.get("bookingServiceId") as string;
 
   const { error } = await supabase
@@ -35,8 +33,7 @@ export async function removeServiceFromBooking(formData: FormData) {
 }
 
 export async function assignStaff(formData: FormData) {
-  const supabase = await createClient();
-  const user = await requireUser();
+  const [user, supabase] = await Promise.all([requireUser(), createClient()]);
   const bookingServiceId = formData.get("bookingServiceId") as string;
   const staffId = formData.get("staffId") as string;
   const roleDescription = formData.get("roleDescription") as string;
@@ -52,8 +49,7 @@ export async function assignStaff(formData: FormData) {
 }
 
 export async function removeStaff(formData: FormData) {
-  const supabase = await createClient();
-  const user = await requireUser();
+  const [user, supabase] = await Promise.all([requireUser(), createClient()]);
   const assignmentId = formData.get("assignmentId") as string;
 
   const { error } = await supabase
@@ -66,8 +62,7 @@ export async function removeStaff(formData: FormData) {
 }
 
 export async function createMilestone(formData: FormData) {
-  const supabase = await createClient();
-  const user = await requireUser();
+  const [user, supabase] = await Promise.all([requireUser(), createClient()]);
   const bookingId = formData.get("bookingId") as string;
   const title = formData.get("title") as string;
   const description = formData.get("description") as string;
@@ -102,8 +97,7 @@ export async function createMilestone(formData: FormData) {
 }
 
 export async function updateMilestone(formData: FormData) {
-  const supabase = await createClient();
-  const user = await requireUser();
+  const [user, supabase] = await Promise.all([requireUser(), createClient()]);
   const id = formData.get("id") as string;
   const title = formData.get("title") as string;
   const description = formData.get("description") as string;
@@ -124,8 +118,7 @@ export async function updateMilestone(formData: FormData) {
 }
 
 export async function deleteMilestone(formData: FormData) {
-  const supabase = await createClient();
-  const user = await requireUser();
+  const [user, supabase] = await Promise.all([requireUser(), createClient()]);
   const id = formData.get("id") as string;
 
   await supabase.from("event_milestones").delete().eq("id", id);
@@ -133,8 +126,7 @@ export async function deleteMilestone(formData: FormData) {
 }
 
 export async function createBooking(formData: FormData) {
-  const supabase = await createClient();
-  const user = await requireUser();
+  const [user, supabase] = await Promise.all([requireUser(), createClient()]);
   const clientEmail = formData.get("clientEmail") as string;
   const eventType = formData.get("eventType") as string;
   const eventDate = formData.get("eventDate") as string;
@@ -167,8 +159,7 @@ export async function createBooking(formData: FormData) {
 }
 
 export async function uploadApprovalFile(formData: FormData) {
-  const supabase = await createClient();
-  const user = await requireUser();
+  const [user, supabase] = await Promise.all([requireUser(), createClient()]);
   const bookingId = formData.get("bookingId") as string;
   const title = formData.get("title") as string;
   const description = formData.get("description") as string;
@@ -221,8 +212,7 @@ export async function uploadApprovalFile(formData: FormData) {
 }
 
 export async function updateBookingStatus(formData: FormData) {
-  const supabase = await createClient();
-  const user = await requireUser();
+  const [user, supabase] = await Promise.all([requireUser(), createClient()]);
   const id = formData.get("id") as string;
   const status = formData.get("status") as string;
 
@@ -231,8 +221,7 @@ export async function updateBookingStatus(formData: FormData) {
 }
 
 export async function promoteToStaff(formData: FormData) {
-  const supabase = await createClient();
-  const user = await requireUser();
+  const [user, supabase] = await Promise.all([requireUser(), createClient()]);
   const profileId = formData.get("profileId") as string;
 
   await supabase.from("profiles").update({ role: "staff" }).eq("id", profileId);
@@ -240,8 +229,7 @@ export async function promoteToStaff(formData: FormData) {
 }
 
 export async function demoteFromStaff(formData: FormData) {
-  const supabase = await createClient();
-  const user = await requireUser();
+  const [user, supabase] = await Promise.all([requireUser(), createClient()]);
   const profileId = formData.get("profileId") as string;
 
   await supabase.from("profiles").update({ role: "client" }).eq("id", profileId);
@@ -249,8 +237,7 @@ export async function demoteFromStaff(formData: FormData) {
 }
 
 export async function deleteBooking(formData: FormData) {
-  const supabase = await createClient();
-  const user = await requireUser();
+  const [user, supabase] = await Promise.all([requireUser(), createClient()]);
   const id = formData.get("id") as string;
 
   await supabase.from("events_bookings").delete().eq("id", id);
@@ -258,8 +245,7 @@ export async function deleteBooking(formData: FormData) {
 }
 
 export async function deleteApprovalItem(formData: FormData) {
-  const supabase = await createClient();
-  const user = await requireUser();
+  const [user, supabase] = await Promise.all([requireUser(), createClient()]);
   const id = formData.get("id") as string;
   const fileUrl = formData.get("fileUrl") as string;
 

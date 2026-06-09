@@ -5,8 +5,8 @@ import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/user";
 
 export async function updateProfile(formData: FormData) {
-  const supabase = await createClient();
   const user = await requireUser();
+  const supabase = await createClient();
 
   const fullName = formData.get("fullName") as string;
   const phone = formData.get("phone") as string;

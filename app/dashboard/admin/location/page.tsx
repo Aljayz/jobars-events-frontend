@@ -8,8 +8,7 @@ import { getCachedLocations } from "@/lib/locations";
 import { MapPin, CheckCircle, XCircle, Send, Plus } from "lucide-react";
 
 export default async function LocationManagement() {
-  const user = await requireUser();
-  const supabase = await createClient();
+  const [user, supabase] = await Promise.all([requireUser(), createClient()]);
 
   const role = user.role as string;
   const isAdmin = ["admin", "super-admin"].includes(role);
@@ -51,8 +50,7 @@ export default async function LocationManagement() {
           </h2>
           <form action={async (formData: FormData) => {
             "use server";
-            const user = await requireUser();
-            const supabase = await createClient();
+            const [user, supabase] = await Promise.all([requireUser(), createClient()]);
             let isDirectUpdate = false;
             const [latStr, lngStr] = (formData.get("coordinates") as string).split(",").map(s => s.trim());
             const lat = parseFloat(latStr);
@@ -118,8 +116,7 @@ export default async function LocationManagement() {
           </h2>
           <form action={async (formData: FormData) => {
             "use server";
-            const user = await requireUser();
-            const supabase = await createClient();
+            const [user, supabase] = await Promise.all([requireUser(), createClient()]);
             const [latStr, lngStr] = (formData.get("coordinates") as string).split(",").map(s => s.trim());
             const lat = parseFloat(latStr);
             const lng = parseFloat(lngStr);
@@ -211,8 +208,7 @@ export default async function LocationManagement() {
                     <div className="flex gap-2">
                       <form suppressHydrationWarning action={async () => {
                         "use server";
-                        const user = await requireUser();
-                        const supabase = await createClient();
+                        const [user, supabase] = await Promise.all([requireUser(), createClient()]);
                         const { error: updateError } = await supabase.from("location_update_requests").update({ status: "approved", reviewed_by: user.uid, reviewed_at: new Date().toISOString() }).eq("id", req.id as string);
                         if (updateError) { redirect("/dashboard/admin/location?error=Failed to approve"); }
                         const { error: insertError } = await supabase.from("business_locations").insert({
@@ -231,8 +227,7 @@ export default async function LocationManagement() {
                       </form>
                       <form suppressHydrationWarning action={async () => {
                         "use server";
-                        const user = await requireUser();
-                        const supabase = await createClient();
+                        const [user, supabase] = await Promise.all([requireUser(), createClient()]);
                         const { error } = await supabase.from("location_update_requests").update({ status: "denied", reviewed_by: user.uid, reviewed_at: new Date().toISOString() }).eq("id", req.id as string);
                         if (error) { redirect("/dashboard/admin/location?error=Failed to deny"); }
                         redirect("/dashboard/admin/location?success=Request denied");

@@ -4,8 +4,7 @@ import { redirect } from "next/navigation";
 import { CalendarPlus } from "lucide-react";
 
 export default async function ClientBookEvent() {
-  const user = await requireUser();
-  const supabase = await createClient();
+  const [user, supabase] = await Promise.all([requireUser(), createClient()]);
 
   const { data: services } = await supabase
     .from("services")

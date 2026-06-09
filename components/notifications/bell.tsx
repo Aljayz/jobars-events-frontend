@@ -4,8 +4,7 @@ import { createClient } from "@/utils/supabase/server";
 import { requireUser } from "@/lib/user";
 
 export default async function NotificationBell() {
-  const user = await requireUser();
-  const supabase = await createClient();
+  const [user, supabase] = await Promise.all([requireUser(), createClient()]);
 
   const { count } = await supabase
     .from("notifications")

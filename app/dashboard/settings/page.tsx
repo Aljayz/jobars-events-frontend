@@ -5,8 +5,7 @@ import { updateProfile } from "./actions";
 import { User, Mail, Phone, Shield } from "lucide-react";
 
 export default async function SettingsPage() {
-  const user = await requireUser();
-  const supabase = await createClient();
+  const [user, supabase] = await Promise.all([requireUser(), createClient()]);
 
   const { data: profile } = await supabase
     .from("profiles")

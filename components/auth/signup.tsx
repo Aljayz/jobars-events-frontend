@@ -91,6 +91,60 @@ const countryCodes = [
 const selectClass =
   "bg-gray-800/90 border-gray-700 text-white h-11! w-full rounded-xl focus:ring-1 focus:ring-yellow-400/20 transition-all";
 
+type UIAction =
+  | { type: "TOGGLE_PASSWORD" }
+  | { type: "TOGGLE_CONFIRM_PASSWORD" }
+  | { type: "SET_ACCEPTED_TERMS"; value: boolean }
+  | { type: "SET_TERMS_VIEWED" }
+  | { type: "SET_DIALOG_OPEN"; value: boolean }
+  | { type: "ACCEPT_TERMS_AND_CLOSE" };
+
+const INITIAL_UI = {
+  showPassword: false,
+  showConfirmPassword: false,
+  acceptedTerms: false,
+  termsViewed: false,
+  dialogOpen: false,
+};
+
+function uiReducer(state: typeof INITIAL_UI, action: UIAction) {
+  switch (action.type) {
+    case "TOGGLE_PASSWORD":
+      return { ...state, showPassword: !state.showPassword };
+    case "TOGGLE_CONFIRM_PASSWORD":
+      return { ...state, showConfirmPassword: !state.showConfirmPassword };
+    case "SET_ACCEPTED_TERMS":
+      return { ...state, acceptedTerms: action.value };
+    case "SET_TERMS_VIEWED":
+      return { ...state, termsViewed: true };
+    case "SET_DIALOG_OPEN":
+      return { ...state, dialogOpen: action.value };
+    case "ACCEPT_TERMS_AND_CLOSE":
+      return { ...state, acceptedTerms: true, dialogOpen: false };
+    default:
+      return state;
+  }
+}
+
+const formatPhone = (digits: string): string => {
+  const d = digits.replace(/\D/g, "");
+  if (d.length <= 3) return d;
+  if (d.length <= 6) return `${d.slice(0, 3)} ${d.slice(3)}`;
+  return `${d.slice(0, 3)} ${d.slice(3, 6)} ${d.slice(6, 10)}`;
+};
+
+const getPasswordStrength = (pw: string): { score: number; label: string; color: string } => {
+  if (pw.length === 0) return { score: 0, label: "", color: "" };
+  if (pw.length < 8) return { score: 1, label: "Too short", color: "bg-red-500" };
+  let score = 1;
+  if (/[a-z]/.test(pw) && /[A-Z]/.test(pw)) score++;
+  if (/\d/.test(pw)) score++;
+  if (/[^a-zA-Z0-9]/.test(pw)) score++;
+  const labels = ["", "Weak", "Fair", "Good", "Strong"];
+  const colors = ["", "bg-red-500", "bg-orange-500", "bg-yellow-500", "bg-green-500"];
+  return { score, label: labels[score], color: colors[score] };
+};
+
 function BirthdateSelects({
   dataForm,
   dispatch,
@@ -216,68 +270,14 @@ function SignUp() {
     undefined,
   );
 
-  type UIAction =
-    | { type: "TOGGLE_PASSWORD" }
-    | { type: "TOGGLE_CONFIRM_PASSWORD" }
-    | { type: "SET_ACCEPTED_TERMS"; value: boolean }
-    | { type: "SET_TERMS_VIEWED" }
-    | { type: "SET_DIALOG_OPEN"; value: boolean }
-    | { type: "ACCEPT_TERMS_AND_CLOSE" };
-
-  const initialUI = {
-    showPassword: false,
-    showConfirmPassword: false,
-    acceptedTerms: false,
-    termsViewed: false,
-    dialogOpen: false,
-  };
-
-  function uiReducer(state: typeof initialUI, action: UIAction) {
-    switch (action.type) {
-      case "TOGGLE_PASSWORD":
-        return { ...state, showPassword: !state.showPassword };
-      case "TOGGLE_CONFIRM_PASSWORD":
-        return { ...state, showConfirmPassword: !state.showConfirmPassword };
-      case "SET_ACCEPTED_TERMS":
-        return { ...state, acceptedTerms: action.value };
-      case "SET_TERMS_VIEWED":
-        return { ...state, termsViewed: true };
-      case "SET_DIALOG_OPEN":
-        return { ...state, dialogOpen: action.value };
-      case "ACCEPT_TERMS_AND_CLOSE":
-        return { ...state, acceptedTerms: true, dialogOpen: false };
-      default:
-        return state;
-    }
-  }
-
-  const [ui, dispatchUI] = React.useReducer(uiReducer, initialUI);
+  const [ui, dispatchUI] = React.useReducer(uiReducer, INITIAL_UI);
 
   const checkPasswordsMatch = () => dataForm.password === dataForm.confirmPassword;
 
   const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(dataForm.email);
-  const formatPhone = (digits: string): string => {
-    const d = digits.replace(/\D/g, "");
-    if (d.length <= 3) return d;
-    if (d.length <= 6) return `${d.slice(0, 3)} ${d.slice(3)}`;
-    return `${d.slice(0, 3)} ${d.slice(3, 6)} ${d.slice(6, 10)}`;
-  };
-
   const rawDigits = dataForm.phoneNumber.replace(/\D/g, "");
   const formattedPhone = formatPhone(rawDigits);
   const isValidPhone = !dataForm.phoneNumber || rawDigits.length >= 7;
-
-  const getPasswordStrength = (pw: string): { score: number; label: string; color: string } => {
-    if (pw.length === 0) return { score: 0, label: "", color: "" };
-    if (pw.length < 8) return { score: 1, label: "Too short", color: "bg-red-500" };
-    let score = 1;
-    if (/[a-z]/.test(pw) && /[A-Z]/.test(pw)) score++;
-    if (/\d/.test(pw)) score++;
-    if (/[^a-zA-Z0-9]/.test(pw)) score++;
-    const labels = ["", "Weak", "Fair", "Good", "Strong"];
-    const colors = ["", "bg-red-500", "bg-orange-500", "bg-yellow-500", "bg-green-500"];
-    return { score, label: labels[score], color: colors[score] };
-  };
 
   const pwStrength = getPasswordStrength(dataForm.password);
   const canSubmit =

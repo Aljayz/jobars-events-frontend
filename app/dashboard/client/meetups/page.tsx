@@ -4,8 +4,7 @@ import { redirect } from "next/navigation";
 import { CalendarCheck, XCircle } from "lucide-react";
 
 export default async function ClientMeetups() {
-  const user = await requireUser();
-  const supabase = await createClient();
+  const [user, supabase] = await Promise.all([requireUser(), createClient()]);
 
   const { data: meetups } = await supabase
     .from("meetup_bookings")

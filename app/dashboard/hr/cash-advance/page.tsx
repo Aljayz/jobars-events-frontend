@@ -4,8 +4,7 @@ import { redirect } from "next/navigation";
 import { CheckCircle, XCircle } from "lucide-react";
 
 export default async function CashAdvanceManagement() {
-  const user = await requireUser();
-  const supabase = await createClient();
+  const [user, supabase] = await Promise.all([requireUser(), createClient()]);
 
   const { data: requests } = await supabase
     .from("cash_advance_requests")

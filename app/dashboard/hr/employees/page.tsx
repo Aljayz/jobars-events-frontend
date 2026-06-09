@@ -4,8 +4,7 @@ import { redirect } from "next/navigation";
 import { Plus, Search } from "lucide-react";
 
 export default async function EmployeeList() {
-  const user = await requireUser();
-  const supabase = await createClient();
+  const [user, supabase] = await Promise.all([requireUser(), createClient()]);
 
   const { data: employees } = await supabase
     .from("profiles")

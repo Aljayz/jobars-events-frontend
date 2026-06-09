@@ -6,8 +6,8 @@ import { createNotification } from "@/utils/notifications/actions";
 import { requireUser } from "@/lib/user";
 
 export async function toggleMilestone(formData: FormData) {
-  const supabase = await createClient();
   const user = await requireUser();
+  const supabase = await createClient();
   const milestoneId = formData.get("milestoneId") as string;
   const isCompleted = formData.get("isCompleted") === "true";
 
@@ -53,8 +53,8 @@ export async function toggleMilestone(formData: FormData) {
 }
 
 export async function updateApprovalStatus(formData: FormData) {
-  const supabase = await createClient();
   const user = await requireUser();
+  const supabase = await createClient();
   const approvalId = formData.get("approvalId") as string;
   const status = formData.get("status") as string;
   const feedback = formData.get("feedback") as string;

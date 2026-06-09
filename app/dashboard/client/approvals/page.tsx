@@ -4,8 +4,7 @@ import ApprovalCard from "@/components/client/approval-card";
 import { CheckSquare } from "lucide-react";
 
 export default async function ApprovalsPage() {
-  const user = await requireUser();
-  const supabase = await createClient();
+  const [user, supabase] = await Promise.all([requireUser(), createClient()]);
 
   const { data: bookings } = await supabase
     .from("events_bookings")

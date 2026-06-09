@@ -1,3 +1,10 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Messages — Jobars Events",
+  description: "Chat with your event team in real time.",
+};
+
 export default function ChatHome() {
   return (
     <div className="flex items-center justify-center flex-1 text-gray-500">

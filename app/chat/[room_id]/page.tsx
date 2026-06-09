@@ -1,7 +1,13 @@
 import { createClient } from "@/utils/supabase/server";
 import { requireUser } from "@/lib/user";
 import { redirect } from "next/navigation";
+import type { Metadata } from "next";
 import ChatRoomClient from "@/components/chat/chat-room-client";
+
+export const metadata: Metadata = {
+  title: "Chat Room — Jobars Events",
+  description: "Event chat room.",
+};
 
 export default async function ChatRoomPage({
   params,

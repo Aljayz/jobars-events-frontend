@@ -3,9 +3,10 @@ import { requireUser } from "@/lib/user";
 import { redirect } from "next/navigation";
 import { Clock } from "lucide-react";
 
+const EVENTS = ["clock_in", "clock_out", "login", "logout"] as const;
+
 export default async function EmployeeAttendance() {
-  const user = await requireUser();
-  const supabase = await createClient();
+  const [user, supabase] = await Promise.all([requireUser(), createClient()]);
 
   const { data: logs } = await supabase
     .from("attendance_logs")
@@ -13,8 +14,6 @@ export default async function EmployeeAttendance() {
     .eq("employee_id", user.uid)
     .order("timestamp", { ascending: false })
     .limit(20);
-
-  const events = ["clock_in", "clock_out", "login", "logout"] as const;
 
   return (
     <div>
@@ -24,7 +23,7 @@ export default async function EmployeeAttendance() {
       </div>
 
       <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {events.map((event) => (
+        {EVENTS.map((event) => (
           <form key={event} action={async () => {
             "use server";
             const user = await requireUser();

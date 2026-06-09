@@ -3,8 +3,7 @@ import { requireUser } from "@/lib/user";
 import { redirect } from "next/navigation";
 
 export default async function EmployeeSalary() {
-  const user = await requireUser();
-  const supabase = await createClient();
+  const [user, supabase] = await Promise.all([requireUser(), createClient()]);
 
   const { data: records } = await supabase
     .from("salary_records")

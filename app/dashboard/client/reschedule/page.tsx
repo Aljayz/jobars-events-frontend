@@ -4,8 +4,7 @@ import { redirect } from "next/navigation";
 import { CalendarSync } from "lucide-react";
 
 export default async function ClientReschedule() {
-  const user = await requireUser();
-  const supabase = await createClient();
+  const [user, supabase] = await Promise.all([requireUser(), createClient()]);
 
   const [bookingsRes, requestsRes] = await Promise.all([
     supabase.from("events_bookings").select("*").eq("client_id", user.uid).neq("status", "cancelled").order("event_date", { ascending: false }),

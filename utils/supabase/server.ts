@@ -8,7 +8,7 @@ export function createClient() {
   return createSupabaseClient(supabaseUrl, supabaseAnonKey);
 }
 
-export function createServiceClient() {
+function createServiceClient() {
   if (!supabaseServiceKey) {
     throw new Error("SUPABASE_SERVICE_ROLE_KEY is not set");
   }

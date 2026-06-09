@@ -10,9 +10,7 @@ const SESSION_COOKIE = "__session";
 export async function createAuthSession(idToken: string) {
   const expiresIn = 60 * 60 * 24 * 14 * 1000; // 14 days
 
-  const sessionCookie = await adminAuth.createSessionCookie(idToken, { expiresIn });
-
-  const cookieStore = await cookies();
+  const [sessionCookie, cookieStore] = await Promise.all([adminAuth.createSessionCookie(idToken, { expiresIn }), cookies()]);
   cookieStore.set(SESSION_COOKIE, sessionCookie, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
@@ -25,9 +23,7 @@ export async function createAuthSession(idToken: string) {
 export async function createSessionAndRedirect(idToken: string) {
   const expiresIn = 60 * 60 * 24 * 14 * 1000; // 14 days
 
-  const sessionCookie = await adminAuth.createSessionCookie(idToken, { expiresIn });
-
-  const cookieStore = await cookies();
+  const [sessionCookie, cookieStore] = await Promise.all([adminAuth.createSessionCookie(idToken, { expiresIn }), cookies()]);
   cookieStore.set(SESSION_COOKIE, sessionCookie, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",

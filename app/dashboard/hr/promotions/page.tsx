@@ -4,8 +4,7 @@ import { redirect } from "next/navigation";
 import { TrendingUp } from "lucide-react";
 
 export default async function HRPromotions() {
-  const user = await requireUser();
-  const supabase = await createClient();
+  const [user, supabase] = await Promise.all([requireUser(), createClient()]);
 
   const [{ data: employees }, { data: recommendations }] = await Promise.all([
     supabase

@@ -81,8 +81,7 @@ export default async function EventsPipeline() {
                   <div className="flex gap-2">
                     <form suppressHydrationWarning action={async () => {
                       "use server";
-                      const user = await requireUser();
-                      const supabase = await createClient();
+                      const [user, supabase] = await Promise.all([requireUser(), createClient()]);
                       const { error } = await supabase.from("reschedule_requests").update({ status: "approved", reviewed_by: user.uid, reviewed_at: new Date().toISOString() }).eq("id", req.id);
                       if (error) { redirect("/dashboard/admin?error=Failed to approve"); }
                       const { error: bookingError } = await supabase.from("events_bookings").update({ event_date: req.requested_date }).eq("id", req.booking_id);
@@ -95,8 +94,7 @@ export default async function EventsPipeline() {
                     </form>
                     <form suppressHydrationWarning action={async () => {
                       "use server";
-                      const user = await requireUser();
-                      const supabase = await createClient();
+                      const [user, supabase] = await Promise.all([requireUser(), createClient()]);
                       const { error } = await supabase.from("reschedule_requests").update({ status: "denied", reviewed_by: user.uid, reviewed_at: new Date().toISOString() }).eq("id", req.id);
                       if (error) { redirect("/dashboard/admin?error=Failed to deny"); }
                       redirect("/dashboard/admin");

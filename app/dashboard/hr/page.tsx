@@ -5,8 +5,7 @@ import Link from "next/link";
 import { Users, Clock, DollarSign, TrendingUp } from "lucide-react";
 
 export default async function HROverview() {
-  const user = await requireUser();
-  const supabase = await createClient();
+  const [user, supabase] = await Promise.all([requireUser(), createClient()]);
 
   const [employeesRes, attendanceRes, cashAdvanceRes] = await Promise.all([
     supabase.from("profiles").select("*", { count: "exact", head: true }).eq("role", "employee"),

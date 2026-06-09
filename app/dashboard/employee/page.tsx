@@ -5,8 +5,7 @@ import Link from "next/link";
 import { Clock, DollarSign, ListTodo } from "lucide-react";
 
 export default async function EmployeeOverview() {
-  const user = await requireUser();
-  const supabase = await createClient();
+  const [user, supabase] = await Promise.all([requireUser(), createClient()]);
 
   const [attendanceRes, salaryRes, cashAdvanceRes] = await Promise.all([
     supabase.from("attendance_logs").select("*", { count: "exact", head: true }).eq("employee_id", user.uid),

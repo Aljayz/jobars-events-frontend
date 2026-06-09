@@ -29,8 +29,7 @@ export async function markNotificationRead(formData: FormData) {
 }
 
 export async function markAllNotificationsRead() {
-  const supabase = await createClient();
-  const user = await requireUser();
+  const [supabase, user] = await Promise.all([createClient(), requireUser()]);
   await supabase
     .from("notifications")
     .update({ is_read: true })

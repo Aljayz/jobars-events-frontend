@@ -5,8 +5,8 @@ import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/user";
 
 export async function toggleClientMode() {
-  const supabase = await createClient();
   const user = await requireUser();
+  const supabase = await createClient();
 
   const role = user.role as string;
   if (role === "external-client" || role === "client") return;

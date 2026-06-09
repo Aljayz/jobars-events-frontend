@@ -5,8 +5,8 @@ import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/user";
 
 export async function rateEvent(formData: FormData) {
-  const supabase = await createClient();
   const user = await requireUser();
+  const supabase = await createClient();
 
   const bookingId = formData.get("booking_id") as string;
   const rating = parseInt(formData.get("rating") as string);

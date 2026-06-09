@@ -11,12 +11,10 @@ function getInitials(name: string) {
 }
 
 export default async function ChatLayout({ children }: { children: ReactNode }) {
-  const user = await requireUser();
+  const [user, supabase] = await Promise.all([requireUser(), createClient()]);
   const role = user.role;
   const clientMode = user.client_mode === true;
   const isClient = role === "external-client" || clientMode;
-
-  const supabase = await createClient();
 
   const { data: participantRows } = await supabase
     .from("chat_participants")
