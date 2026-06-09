@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { verifySessionCookie, verifyIdToken } from "@/lib/firebase/admin";
 import type { FirebaseUser } from "@/lib/firebase/admin";
 
@@ -13,6 +14,6 @@ async function getAppUser(): Promise<FirebaseUser | null> {
 
 export async function requireUser(): Promise<FirebaseUser> {
   const user = await getAppUser();
-  if (!user) throw new Error("Unauthorized");
+  if (!user) redirect("/auth/login");
   return user;
 }

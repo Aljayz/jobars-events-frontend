@@ -22,6 +22,7 @@ import {
   DollarSign,
   ClipboardList,
   Users,
+  Home,
 } from "lucide-react";
 import type { ComponentType } from "react";
 
@@ -45,6 +46,7 @@ const iconMap: Record<string, ComponentType<{ className?: string }>> = {
   DollarSign,
   ClipboardList,
   Users,
+  Home,
 };
 
 interface NavItem {
@@ -68,7 +70,7 @@ export default function SidebarNav({ items }: { items: NavItem[] }) {
           <Link
             key={item.href}
             href={item.href}
-            className={`flex items-center justify-center gap-3 rounded-xl px-0 py-2.5 transition-all md:justify-start md:px-4 ${
+            className={`flex items-center justify-center gap-3 rounded-xl px-0 ml-[1px] py-2.5 transition-all md:justify-start md:px-4 md:ml-0 ${
               isActive
                 ? "bg-yellow-400/10 text-yellow-400"
                 : "text-gray-400 hover:text-yellow-400 hover:bg-yellow-400/5"

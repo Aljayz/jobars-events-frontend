@@ -1,9 +1,11 @@
 'use client'
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { User, CalendarPlus, X, Menu } from 'lucide-react'
+import { User, CalendarPlus, X, Menu, LayoutDashboard } from 'lucide-react'
 import { usePathname, useRouter } from 'next/navigation'
+import { auth } from '@/lib/firebase/client'
+import { onAuthStateChanged } from 'firebase/auth'
 import { Button } from '../ui/button'
 import { useScroll } from '@/lib/hooks/use-scroll'
 import { cn } from '@/lib/utils'
@@ -17,9 +19,15 @@ const navLinks = [
 
 function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
   const scrolled = useScroll(100)
   const { push } = useRouter()
   const pathname = usePathname()
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (user) => setIsLoggedIn(!!user))
+    return unsub
+  }, [])
 
   if (pathname === '/auth/login' || pathname === '/auth/sign-up') {
     return null
@@ -106,11 +114,11 @@ function Header() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => push('/auth')}
+            onClick={() => push(isLoggedIn ? '/dashboard' : '/auth')}
             className="border-yellow-400 bg-transparent text-yellow-400 hover:bg-yellow-400 hover:text-white transition-all duration-300"
           >
-            <User className="size-4" />
-            <span className="hidden lg:inline ml-1">Login</span>
+            {isLoggedIn ? <LayoutDashboard className="size-4" /> : <User className="size-4" />}
+            <span className="hidden lg:inline ml-1">{isLoggedIn ? 'Dashboard' : 'Login'}</span>
           </Button>
         </div>
       </div>
@@ -151,12 +159,12 @@ function Header() {
               size="sm"
               className="justify-start border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-white bg-transparent"
               onClick={() => {
-                push('/auth')
+                push(isLoggedIn ? '/dashboard' : '/auth')
                 setIsMenuOpen(false)
               }}
             >
-              <User className="size-4 mr-2" />
-              Login
+              {isLoggedIn ? <LayoutDashboard className="size-4 mr-2" /> : <User className="size-4 mr-2" />}
+              {isLoggedIn ? 'Dashboard' : 'Login'}
             </Button>
           </nav>
         </div>

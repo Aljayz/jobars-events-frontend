@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { sendMessage } from "@/app/chat/actions";
 import { Send, CheckCheck, ArrowLeft } from "lucide-react";
@@ -59,8 +59,9 @@ export default function ChatRoomClient({
   const onlineUsers = Object.values(presence).flat().map((p) => p.user_id);
   const isOnline = (uid: string) => onlineUsers.includes(uid);
 
-  const participantMap = useRef(
-    new Map(participants.map((p) => [p.profile_id, { full_name: p.full_name, role: p.role }]))
+  const participantMap = useMemo(
+    () => new Map(participants.map((p) => [p.profile_id, { full_name: p.full_name, role: p.role }])),
+    [participants]
   );
 
   useEffect(() => {
@@ -100,7 +101,7 @@ export default function ChatRoomClient({
         if (status === "SUBSCRIBED") {
           await channel.track({
             user_id: userId,
-            full_name: participantMap.current.get(userId)?.full_name ?? "",
+            full_name: participantMap.get(userId)?.full_name ?? "",
             online_at: new Date().toISOString(),
           });
         }
@@ -158,7 +159,7 @@ export default function ChatRoomClient({
         <div className="flex -gap-x-2 shrink-0">
           {onlineUsers.slice(0, 5).map((uid) => (
             <div key={uid} className="size-7 rounded-full border-2 border-gray-900 bg-gray-700 flex items-center justify-center text-[10px] font-medium text-gray-300">
-              {getInitials(participantMap.current.get(uid)?.full_name ?? uid)}
+              {getInitials(participantMap.get(uid)?.full_name ?? uid)}
             </div>
           ))}
           {onlineUsers.length > 5 && (
@@ -195,7 +196,7 @@ export default function ChatRoomClient({
                 const isMe = msg.sender_id === userId;
                 const profile = msg.profiles as { full_name: string; role?: string } | null;
                 const senderName = profile?.full_name ?? "Unknown";
-                const senderRole = profile?.role ?? participantMap.current.get(msg.sender_id as string)?.role ?? "";
+                const senderRole = profile?.role ?? participantMap.get(msg.sender_id as string)?.role ?? "";
                 const prev = msgs[idx - 1];
                 const showSender = !isMe && (!prev || prev.sender_id !== msg.sender_id);
                 const time = new Date(msg.created_at as string);

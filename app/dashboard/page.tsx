@@ -60,6 +60,11 @@ function getCurrentDate(): string {
   });
 }
 
+function daysUntil(dateStr: string): number {
+  const ms = new Date(dateStr).getTime() - Date.now();
+  return Math.ceil(ms / (1000 * 60 * 60 * 24));
+}
+
 export default async function DashboardHome() {
   const [user, supabase] = await Promise.all([
     requireUser(),
@@ -68,7 +73,7 @@ export default async function DashboardHome() {
 
   const role = user.role;
   const clientMode = user.client_mode === true;
-  const displayRole = clientMode ? "client" : role;
+  const displayRole = clientMode || role === "external-client" || role === "client" ? "client" : role;
 
   const [notifRes, bookingsRes, msgRes] = await Promise.all([
     supabase
@@ -299,7 +304,7 @@ export default async function DashboardHome() {
             <div className="space-y-2">
               {bookings.map((b) => {
                 const eventDate = new Date(b.event_date);
-                const diffDays = Math.ceil((eventDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+                const diffDays = daysUntil(b.event_date);
                 const isPast = diffDays < 0;
                 const isToday = diffDays === 0;
                 return (

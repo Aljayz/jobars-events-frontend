@@ -2,6 +2,7 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/user";
 
 export async function updateProfile(formData: FormData) {
@@ -11,7 +12,7 @@ export async function updateProfile(formData: FormData) {
   const fullName = formData.get("fullName") as string;
   const phone = formData.get("phone") as string;
 
-  await supabase
+  const { error } = await supabase
     .from("profiles")
     .update({
       full_name: fullName || null,
@@ -19,5 +20,10 @@ export async function updateProfile(formData: FormData) {
     })
     .eq("id", user.uid);
 
+  if (error) {
+    return redirect(`/dashboard/settings?error=${encodeURIComponent(error.message)}`);
+  }
+
   revalidatePath("/dashboard/settings");
+  redirect("/dashboard/settings?success=Profile updated");
 }

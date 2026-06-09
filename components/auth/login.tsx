@@ -21,7 +21,7 @@ import { createSessionAndRedirect, clearAuthSession } from "@/app/auth/actions";
 
 function getFirebaseErrorMessage(error: unknown): string {
   if (error instanceof Error) {
-    const code = (error as any).code;
+    const code = (error as { code?: string }).code;
     switch (code) {
       case "auth/user-not-found":
       case "auth/wrong-password":
@@ -69,7 +69,7 @@ function Login() {
       const idToken = await result.user.getIdToken();
       await createSessionAndRedirect(idToken);
     } catch (error: unknown) {
-      if ((error as any)?.code !== "auth/popup-closed-by-user") {
+      if ((error as { code?: string })?.code !== "auth/popup-closed-by-user") {
         await clearAuthSession();
       }
     } finally {

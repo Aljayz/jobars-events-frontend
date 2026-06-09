@@ -1,41 +1,30 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { CheckCircle, XCircle, X } from "lucide-react";
 
 function FlashBannerInner() {
   const searchParams = useSearchParams();
-  const [visible, setVisible] = useState(false);
-  const [message, setMessage] = useState("");
-  const [type, setType] = useState<"success" | "error">("success");
+  const [dismissed, setDismissed] = useState(false);
 
-  useEffect(() => {
-    const error = searchParams.get("error");
-    const success = searchParams.get("success");
-    if (error) {
-      setMessage(error);
-      setType("error");
-      setVisible(true);
-    } else if (success) {
-      setMessage(success);
-      setType("success");
-      setVisible(true);
-    }
-  }, [searchParams]);
+  const error = searchParams.get("error");
+  const success = searchParams.get("success");
+  const message = error || success;
+  const isError = !!error;
 
-  if (!visible) return null;
+  if (!message || dismissed) return null;
 
   return (
     <div className={`mb-4 flex items-center justify-between rounded-lg px-4 py-3 text-sm ${
-      type === "success" ? "bg-green-900/50 text-green-300 border border-green-800" :
-      "bg-red-900/50 text-red-300 border border-red-800"
+      isError ? "bg-red-900/50 text-red-300 border border-red-800" :
+      "bg-green-900/50 text-green-300 border border-green-800"
     }`}>
       <div className="flex items-center gap-2">
-        {type === "success" ? <CheckCircle className="size-4" /> : <XCircle className="size-4" />}
+        {isError ? <XCircle className="size-4" /> : <CheckCircle className="size-4" />}
         {message}
       </div>
-      <button type="button" onClick={() => setVisible(false)} className="hover:text-white transition-colors">
+      <button type="button" onClick={() => setDismissed(true)} className="hover:text-white transition-colors">
         <X className="size-4" />
       </button>
     </div>
