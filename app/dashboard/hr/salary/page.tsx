@@ -1,10 +1,10 @@
 import { createClient } from "@/utils/supabase/server";
+import { requireUser } from "@/lib/user";
 import { redirect } from "next/navigation";
 
 export default async function SalaryManagement() {
+  const user = await requireUser();
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
 
   const [{ data: salaries }, { data: employees }] = await Promise.all([
     supabase

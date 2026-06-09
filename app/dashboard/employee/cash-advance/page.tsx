@@ -1,16 +1,16 @@
 import { createClient } from "@/utils/supabase/server";
+import { requireUser } from "@/lib/user";
 import { redirect } from "next/navigation";
 import { Plus } from "lucide-react";
 
 export default async function EmployeeCashAdvance() {
+  const user = await requireUser();
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
 
   const { data: requests } = await supabase
     .from("cash_advance_requests")
     .select("*")
-    .eq("employee_id", user.id)
+    .eq("employee_id", user.uid)
     .order("created_at", { ascending: false })
     .limit(20);
 
@@ -28,11 +28,10 @@ export default async function EmployeeCashAdvance() {
         </h2>
         <form action={async (formData: FormData) => {
           "use server";
+          const user = await requireUser();
           const supabase = await createClient();
-          const { data: { user } } = await supabase.auth.getUser();
-          if (!user) return;
           const { error } = await supabase.from("cash_advance_requests").insert({
-            employee_id: user.id,
+            employee_id: user.uid,
             amount: parseFloat(formData.get("amount") as string),
             reason: formData.get("reason") as string || null,
           });

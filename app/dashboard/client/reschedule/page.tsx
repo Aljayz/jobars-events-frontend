@@ -1,15 +1,15 @@
 import { createClient } from "@/utils/supabase/server";
+import { requireUser } from "@/lib/user";
 import { redirect } from "next/navigation";
 import { CalendarSync } from "lucide-react";
 
 export default async function ClientReschedule() {
+  const user = await requireUser();
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
 
   const [bookingsRes, requestsRes] = await Promise.all([
-    supabase.from("events_bookings").select("*").eq("client_id", user.id).neq("status", "cancelled").order("event_date", { ascending: false }),
-    supabase.from("reschedule_requests").select("*, events_bookings!reschedule_requests_booking_id_fkey(event_type, event_date)").eq("client_id", user.id).order("created_at", { ascending: false }),
+    supabase.from("events_bookings").select("*").eq("client_id", user.uid).neq("status", "cancelled").order("event_date", { ascending: false }),
+    supabase.from("reschedule_requests").select("*, events_bookings!reschedule_requests_booking_id_fkey(event_type, event_date)").eq("client_id", user.uid).order("created_at", { ascending: false }),
   ]);
 
   const bookings = bookingsRes.data ?? [];
@@ -29,12 +29,11 @@ export default async function ClientReschedule() {
         </h2>
         <form action={async (formData: FormData) => {
           "use server";
+          const user = await requireUser();
           const supabase = await createClient();
-          const { data: { user } } = await supabase.auth.getUser();
-          if (!user) return;
           const { error } = await supabase.from("reschedule_requests").insert({
             booking_id: formData.get("booking_id") as string,
-            client_id: user.id,
+            client_id: user.uid,
             original_date: formData.get("original_date") as string,
             requested_date: formData.get("requested_date") as string,
             reason: formData.get("reason") as string || null,

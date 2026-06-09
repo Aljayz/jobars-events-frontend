@@ -1,4 +1,5 @@
 import { createClient } from "@/utils/supabase/server";
+import { requireUser } from "@/lib/user";
 import { redirect } from "next/navigation";
 import { markNotificationRead, markAllNotificationsRead } from "@/utils/notifications/actions";
 import { Bell, Check, CheckCheck } from "lucide-react";
@@ -10,14 +11,13 @@ const typeIcons: Record<string, string> = {
 };
 
 export default async function NotificationsPage() {
+  const user = await requireUser();
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
 
   const { data: notifications } = await supabase
     .from("notifications")
     .select("*")
-    .eq("profile_id", user.id)
+    .eq("profile_id", user.uid)
     .order("created_at", { ascending: false })
     .limit(50);
 

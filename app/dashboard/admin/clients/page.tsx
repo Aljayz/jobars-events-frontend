@@ -1,11 +1,12 @@
 import { createClient } from "@/utils/supabase/server";
+import { requireUser } from "@/lib/user";
+import { adminAuth } from "@/lib/firebase/admin";
 import { redirect } from "next/navigation";
 import { UserPlus } from "lucide-react";
 
 export default async function ClientConversion() {
+  const user = await requireUser();
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
 
   const [clientsRes, conversionsRes] = await Promise.all([
     supabase.from("profiles").select("id, full_name, email, created_at").eq("role", "external-client").order("full_name"),
@@ -34,21 +35,20 @@ export default async function ClientConversion() {
               </div>
               <form action={async () => {
                 "use server";
+                const user = await requireUser();
                 const supabase = await createClient();
-                const { data: { user } } = await supabase.auth.getUser();
-                if (!user) return;
-                const [{ error: err1 }, { error: err2 }, { error: err3 }] = await Promise.all([
+                const [{ error: err1 }, { error: err2 }] = await Promise.all([
                   supabase.from("client_conversion_requests").insert({
                     client_id: client.id,
                     new_role: "employee",
-                    created_by: user.id,
+                    created_by: user.uid,
                   }),
                   supabase.from("profiles").update({ role: "employee" }).eq("id", client.id),
-                  supabase.auth.admin.updateUserById(client.id, {
-                    user_metadata: { role: "employee", client_mode: true },
-                  }),
                 ]);
-                if (err1 || err2 || err3) { redirect("/dashboard/admin/clients?error=Conversion failed"); }
+                await adminAuth.setCustomUserClaims(client.id, {
+                  role: "employee", client_mode: true, full_name: "",
+                });
+                if (err1 || err2) { redirect("/dashboard/admin/clients?error=Conversion failed"); }
                 redirect("/dashboard/admin/clients?success=Converted successfully");
               }}>
                 <button type="submit" className="flex items-center gap-1.5 rounded-lg bg-yellow-400 px-3 py-1.5 text-xs font-medium text-black hover:bg-yellow-500 transition-all">

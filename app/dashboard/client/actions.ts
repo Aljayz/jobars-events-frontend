@@ -2,13 +2,12 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { createNotification } from "@/utils/notifications/actions";
+import { requireUser } from "@/lib/user";
 
 export async function toggleMilestone(formData: FormData) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
+  const user = await requireUser();
   const milestoneId = formData.get("milestoneId") as string;
   const isCompleted = formData.get("isCompleted") === "true";
 
@@ -55,8 +54,7 @@ export async function toggleMilestone(formData: FormData) {
 
 export async function updateApprovalStatus(formData: FormData) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
+  const user = await requireUser();
   const approvalId = formData.get("approvalId") as string;
   const status = formData.get("status") as string;
   const feedback = formData.get("feedback") as string;

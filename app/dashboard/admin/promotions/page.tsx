@@ -1,11 +1,11 @@
 import { createClient } from "@/utils/supabase/server";
+import { requireUser } from "@/lib/user";
 import { redirect } from "next/navigation";
 import { CheckCircle, XCircle } from "lucide-react";
 
 export default async function PromotionManagement() {
+  const user = await requireUser();
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
 
   const { data: promotions } = await supabase
     .from("promotion_recommendations")
@@ -42,7 +42,7 @@ export default async function PromotionManagement() {
                     "use server";
                     const supabase = await createClient();
                     const [{ error: err1 }, { error: err2 }] = await Promise.all([
-                      supabase.from("promotion_recommendations").update({ status: "confirmed", reviewed_by: user.id, reviewed_at: new Date().toISOString() }).eq("id", rec.id as string),
+                      supabase.from("promotion_recommendations").update({ status: "confirmed", reviewed_by: user.uid, reviewed_at: new Date().toISOString() }).eq("id", rec.id as string),
                       supabase.from("profiles").update({ role: "staff" }).eq("id", rec.employee_id as string),
                     ]);
                     if (err1 || err2) { redirect("/dashboard/admin/promotions"); }
@@ -55,7 +55,7 @@ export default async function PromotionManagement() {
                   <form suppressHydrationWarning action={async () => {
                     "use server";
                     const supabase = await createClient();
-                    const { error } = await supabase.from("promotion_recommendations").update({ status: "rejected", reviewed_by: user.id, reviewed_at: new Date().toISOString() }).eq("id", rec.id as string);
+                    const { error } = await supabase.from("promotion_recommendations").update({ status: "rejected", reviewed_by: user.uid, reviewed_at: new Date().toISOString() }).eq("id", rec.id as string);
                     if (error) { redirect("/dashboard/admin/promotions"); }
                     redirect("/dashboard/admin/promotions");
                   }}>

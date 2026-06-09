@@ -1,23 +1,14 @@
-import { createClient } from "@/utils/supabase/server";
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
+import { adminAuth } from "@/lib/firebase/admin";
 
-export async function POST(request: Request) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
+export async function POST(request: NextRequest) {
+  const sessionCookie = request.cookies.get("__session")?.value;
+  if (!sessionCookie) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { data: caller } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  if (!caller || !["admin", "manager"].includes(caller.role)) {
+  const caller = await adminAuth.verifySessionCookie(sessionCookie);
+  if (!caller || !["admin", "manager"].includes(caller.role as string)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -27,24 +18,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "email and role required" }, { status: 400 });
   }
 
-  const { data: targetProfile } = await supabase
-    .from("profiles")
-    .select("id")
-    .eq("email", email)
-    .single();
-
-  if (!targetProfile) {
+  try {
+    const targetUser = await adminAuth.getUserByEmail(email);
+    await adminAuth.setCustomUserClaims(targetUser.uid, { role });
+    return NextResponse.json({ success: true });
+  } catch {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
-
-  const { error } = await supabase
-    .from("profiles")
-    .update({ role })
-    .eq("id", targetProfile.id);
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-
-  return NextResponse.json({ success: true });
 }

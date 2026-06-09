@@ -1,16 +1,16 @@
 import { createClient } from "@/utils/supabase/server";
+import { requireUser } from "@/lib/user";
 import ApprovalCard from "@/components/client/approval-card";
 import { CheckSquare } from "lucide-react";
 
 export default async function ApprovalsPage() {
+  const user = await requireUser();
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
 
   const { data: bookings } = await supabase
     .from("events_bookings")
     .select("id")
-    .eq("client_id", user.id);
+    .eq("client_id", user.uid);
 
   const bookingIds = bookings?.map((b) => b.id) ?? [];
 

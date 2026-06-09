@@ -1,16 +1,16 @@
 import { createClient } from "@/utils/supabase/server";
+import { requireUser } from "@/lib/user";
 import { redirect } from "next/navigation";
 import { CalendarCheck, XCircle } from "lucide-react";
 
 export default async function ClientMeetups() {
+  const user = await requireUser();
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
 
   const { data: meetups } = await supabase
     .from("meetup_bookings")
     .select("*")
-    .eq("client_id", user.id)
+    .eq("client_id", user.uid)
     .order("meetup_date", { ascending: false });
 
   return (
@@ -27,11 +27,10 @@ export default async function ClientMeetups() {
         </h2>
         <form action={async (formData: FormData) => {
           "use server";
+          const user = await requireUser();
           const supabase = await createClient();
-          const { data: { user } } = await supabase.auth.getUser();
-          if (!user) return;
           const { error } = await supabase.from("meetup_bookings").insert({
-            client_id: user.id,
+            client_id: user.uid,
             meetup_date: formData.get("meetup_date") as string,
             purpose: formData.get("purpose") as string || null,
           });

@@ -1,11 +1,39 @@
 "use server";
 
-import { createClient } from "@/utils/supabase/server";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { adminAuth } from "@/lib/firebase/admin";
+import { createClient } from "@/utils/supabase/server";
 
-export async function signUp(formData: FormData) {
-  const supabase = await createClient();
+const SESSION_COOKIE = "__session";
 
+export async function createAuthSession(idToken: string) {
+  const expiresIn = 60 * 60 * 24 * 14 * 1000; // 14 days
+
+  const sessionCookie = await adminAuth.createSessionCookie(idToken, { expiresIn });
+
+  const cookieStore = await cookies();
+  cookieStore.set(SESSION_COOKIE, sessionCookie, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: expiresIn / 1000,
+    path: "/",
+  });
+}
+
+export async function clearAuthSession() {
+  const cookieStore = await cookies();
+  cookieStore.set(SESSION_COOKIE, "", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 0,
+    path: "/",
+  });
+}
+
+export async function registerUser(formData: FormData) {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
   const fullName = formData.get("fullName") as string;
@@ -23,70 +51,53 @@ export async function signUp(formData: FormData) {
   const dayPadded = birthDay.padStart(2, "0");
   const birthdate = monthNum ? `${birthYear}-${monthNum}-${dayPadded}` : "";
 
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      data: {
-        full_name: fullName,
-        phone: phone || null,
-        birthdate,
-        role: "external-client",
-      },
-    },
-  });
+  try {
+    const userRecord = await adminAuth.createUser({
+      email,
+      password,
+      displayName: fullName,
+    });
 
-  if (error) {
-    return { error: error.message };
+    const claims: Record<string, string | boolean> = {
+      role: "external-client",
+      client_mode: false,
+      full_name: fullName,
+    };
+    await adminAuth.setCustomUserClaims(userRecord.uid, claims);
+
+    const supabase = await createClient();
+    await supabase.from("profiles").insert({
+      id: userRecord.uid,
+      full_name: fullName,
+      phone: phone || null,
+      birthdate: birthdate || null,
+      role: "external-client",
+    });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Sign up failed";
+    return { error: message };
   }
 
-  if (data.session) {
-    redirect("/dashboard/client");
-  }
-
-  return { message: "Check your email to confirm your account." };
-}
-
-export async function signIn(formData: FormData) {
-  const supabase = await createClient();
-
-  const email = formData.get("email") as string;
-  const password = formData.get("password") as string;
-
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  const role = data.user?.user_metadata?.role ?? "client";
-  redirect(`/dashboard/${role}`);
+  return { message: "Account created. Please sign in." };
 }
 
 export async function signOut() {
-  const supabase = await createClient();
-  await supabase.auth.signOut();
-  redirect("/auth/login");
-}
-
-export async function signInWithGoogle() {
-  const supabase = await createClient();
-
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: "google",
-    options: {
-      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
-    },
+  const cookieStore = await cookies();
+  const session = cookieStore.get(SESSION_COOKIE)?.value;
+  if (session) {
+    try {
+      const decoded = await adminAuth.verifySessionCookie(session);
+      await adminAuth.revokeRefreshTokens(decoded.uid);
+    } catch {
+      // ignore
+    }
+  }
+  cookieStore.set(SESSION_COOKIE, "", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 0,
+    path: "/",
   });
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  if (data.url) {
-    redirect(data.url);
-  }
+  redirect("/auth/login");
 }

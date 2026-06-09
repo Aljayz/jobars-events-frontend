@@ -2,6 +2,7 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
+import { requireUser } from "@/lib/user";
 
 export async function sendMessage(formData: FormData) {
   const supabase = await createClient();
@@ -10,14 +11,11 @@ export async function sendMessage(formData: FormData) {
 
   if (!content?.trim()) return;
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return;
+  const user = await requireUser();
 
   await supabase.from("messages").insert({
     chat_room_id: chatRoomId,
-    sender_id: user.id,
+    sender_id: user.uid,
     content: content.trim(),
   });
 

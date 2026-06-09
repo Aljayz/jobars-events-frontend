@@ -1,4 +1,4 @@
-import { createClient } from "@/utils/supabase/server";
+import { requireUser } from "@/lib/user";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import SignOutButton from "@/components/auth/sign-out-button";
@@ -16,12 +16,8 @@ const nav = [
 ];
 
 export default async function StaffLayout({ children }: { children: ReactNode }) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
-
-  const role = user.user_metadata?.role as string;
-  if (role !== "staff") redirect(`/dashboard/${role}`);
+  const user = await requireUser();
+  if (user.role !== "staff") redirect(`/dashboard/${user.role}`);
 
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100">
@@ -32,7 +28,7 @@ export default async function StaffLayout({ children }: { children: ReactNode })
           </Link>
           <div className="flex items-center gap-1 sm:gap-2">
             <NotificationBell />
-            <span className="hidden text-sm text-gray-500 sm:inline">{user.user_metadata?.full_name as string}</span>
+            <span className="hidden text-sm text-gray-500 sm:inline">{user.full_name}</span>
             <SignOutButton />
           </div>
         </div>

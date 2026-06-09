@@ -1,17 +1,17 @@
 import { createClient } from "@/utils/supabase/server";
+import { requireUser } from "@/lib/user";
 import { redirect } from "next/navigation";
 import { updateProfile } from "./actions";
 import { User, Mail, Phone, Shield } from "lucide-react";
 
 export default async function SettingsPage() {
+  const user = await requireUser();
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
 
   const { data: profile } = await supabase
     .from("profiles")
     .select("*")
-    .eq("id", user.id)
+    .eq("id", user.uid)
     .single();
 
   return (

@@ -1,4 +1,5 @@
 import { createClient } from "@/utils/supabase/server";
+import { requireUser } from "@/lib/user";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { CalendarCheck, Bell, MessageSquare, ListChecks, LayoutGrid, TrendingUp, Clock, Users, ClipboardList } from "lucide-react";
@@ -6,23 +7,22 @@ import { CalendarCheck, Bell, MessageSquare, ListChecks, LayoutGrid, TrendingUp,
 const ADMIN_ROLES = ["super-admin", "admin", "manager"];
 
 export default async function DashboardHome() {
+  const user = await requireUser();
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
 
-  const role = (user.user_metadata?.role as string) ?? "external-client";
-  const clientMode = user.user_metadata?.client_mode === true;
+  const role = user.role;
+  const clientMode = user.client_mode === true;
 
   const [notifRes, bookingsRes, msgRes] = await Promise.all([
     supabase
       .from("notifications")
       .select("*", { count: "exact", head: true })
-      .eq("profile_id", user.id)
+      .eq("profile_id", user.uid)
       .eq("is_read", false),
     supabase
       .from("events_bookings")
       .select("*")
-      .eq("client_id", user.id)
+      .eq("client_id", user.uid)
       .order("event_date", { ascending: true })
       .limit(5),
     supabase
@@ -50,7 +50,7 @@ export default async function DashboardHome() {
     <div>
       <div className="mb-8">
         <h1 className="text-2xl font-bold">
-          Welcome back, {user.user_metadata?.full_name as string ?? "User"}
+          Welcome back, {user.full_name ?? "User"}
         </h1>
         <p className="mt-1 text-gray-400 capitalize">Here&apos;s your {clientMode ? "client" : role} dashboard overview.</p>
       </div>

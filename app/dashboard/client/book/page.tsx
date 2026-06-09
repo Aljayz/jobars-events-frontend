@@ -1,11 +1,11 @@
 import { createClient } from "@/utils/supabase/server";
+import { requireUser } from "@/lib/user";
 import { redirect } from "next/navigation";
 import { CalendarPlus } from "lucide-react";
 
 export default async function ClientBookEvent() {
+  const user = await requireUser();
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
 
   const { data: services } = await supabase
     .from("services")
@@ -23,11 +23,10 @@ export default async function ClientBookEvent() {
       <div className="rounded-xl border border-gray-800 bg-gray-900/50 p-6">
         <form action={async (formData: FormData) => {
           "use server";
+          const user = await requireUser();
           const supabase = await createClient();
-          const { data: { user } } = await supabase.auth.getUser();
-          if (!user) return;
           const { data: booking, error } = await supabase.from("events_bookings").insert({
-            client_id: user.id,
+            client_id: user.uid,
             event_type: formData.get("event_type") as string,
             event_date: formData.get("event_date") as string,
             venue: formData.get("venue") as string || null,

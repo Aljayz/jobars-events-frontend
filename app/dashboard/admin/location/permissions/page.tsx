@@ -1,11 +1,11 @@
 import { createClient } from "@/utils/supabase/server";
+import { requireUser } from "@/lib/user";
 import { redirect } from "next/navigation";
 import { Shield } from "lucide-react";
 
 export default async function LocationPermissions() {
+  const user = await requireUser();
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
 
   const [managersRes, permissionsRes] = await Promise.all([
     supabase.from("profiles").select("id, full_name, email").eq("role", "manager"),
@@ -51,10 +51,9 @@ export default async function LocationPermissions() {
                 ) : (
                   <form action={async () => {
                     "use server";
+                    const user = await requireUser();
                     const supabase = await createClient();
-                    const { data: { user } } = await supabase.auth.getUser();
-                    if (!user) return;
-                    const { error } = await supabase.from("permanent_location_permissions").insert({ manager_id: mgr.id, granted_by: user.id });
+                    const { error } = await supabase.from("permanent_location_permissions").insert({ manager_id: mgr.id, granted_by: user.uid });
                     if (error) { redirect("/dashboard/admin/location/permissions"); }
                     redirect("/dashboard/admin/location/permissions");
                   }}>

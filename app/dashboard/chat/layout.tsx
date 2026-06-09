@@ -1,4 +1,5 @@
 import { createClient } from "@/utils/supabase/server";
+import { requireUser } from "@/lib/user";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import SignOutButton from "@/components/auth/sign-out-button";
@@ -10,14 +11,13 @@ function getInitials(name: string) {
 }
 
 export default async function ChatLayout({ children }: { children: ReactNode }) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
+  const user = await requireUser();
 
+  const supabase = await createClient();
   const { data: participantRows } = await supabase
     .from("chat_participants")
     .select("chat_room_id, chat_rooms(id, name, events_bookings(event_type, profiles(full_name)))")
-    .eq("profile_id", user.id);
+    .eq("profile_id", user.uid);
 
   const rooms = ((participantRows ?? []) as Array<Record<string, unknown>>).map((p) => {
     const roomsArr = (p.chat_rooms ?? []) as Array<Record<string, unknown>>;

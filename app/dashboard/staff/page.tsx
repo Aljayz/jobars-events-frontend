@@ -1,15 +1,15 @@
 import { createClient } from "@/utils/supabase/server";
+import { requireUser } from "@/lib/user";
 import { CalendarDays, MapPin, Briefcase, ListTodo } from "lucide-react";
 
 export default async function StaffTasks() {
+  const user = await requireUser();
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
 
   const { data: rawAssignments } = await supabase
     .from("staff_assignments")
     .select("id, role_description, assigned_at, booking_service_id")
-    .eq("staff_id", user.id)
+    .eq("staff_id", user.uid)
     .order("assigned_at", { ascending: false });
 
   interface StaffTask {

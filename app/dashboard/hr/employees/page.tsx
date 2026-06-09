@@ -1,11 +1,11 @@
 import { createClient } from "@/utils/supabase/server";
+import { requireUser } from "@/lib/user";
 import { redirect } from "next/navigation";
 import { Plus, Search } from "lucide-react";
 
 export default async function EmployeeList() {
+  const user = await requireUser();
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
 
   const { data: employees } = await supabase
     .from("profiles")
@@ -22,9 +22,8 @@ export default async function EmployeeList() {
         </div>
         <form action={async (formData: FormData) => {
           "use server";
+          const user = await requireUser();
           const supabase = await createClient();
-          const { data: { user } } = await supabase.auth.getUser();
-          if (!user) return;
           const { error } = await supabase.from("employee_records").insert({
             profile_id: formData.get("profile_id") as string,
             employee_id: formData.get("employee_id") as string,

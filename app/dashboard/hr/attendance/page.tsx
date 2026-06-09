@@ -1,11 +1,11 @@
 import { createClient } from "@/utils/supabase/server";
+import { requireUser } from "@/lib/user";
 import { redirect } from "next/navigation";
 import { CheckCircle } from "lucide-react";
 
 export default async function AttendanceManagement() {
+  const user = await requireUser();
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
 
   const { data: logs } = await supabase
     .from("attendance_logs")
@@ -39,7 +39,7 @@ export default async function AttendanceManagement() {
                 "use server";
                 const supabase = await createClient();
                 const { error } = await supabase.from("attendance_logs").update({
-                  confirmed_by: user.id,
+                  confirmed_by: user.uid,
                   confirmed_at: new Date().toISOString(),
                 }).eq("id", log.id);
                 if (error) { redirect("/dashboard/hr/attendance?error=Confirmation failed"); }

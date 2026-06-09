@@ -2,6 +2,7 @@
 
 import React from "react";
 import { useActionState, useReducer } from "react";
+import { useRouter } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -24,7 +25,9 @@ import {
 } from "@/components/ui/select";
 import TermConditionDialog from "./terms-condition/termConditionDialog";
 import { Dialog, DialogTrigger, DialogContent } from "../ui/dialog";
-import { signUp } from "@/app/auth/actions";
+import { auth } from "@/lib/firebase/client";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { registerUser, createAuthSession } from "@/app/auth/actions";
 
 type FormAction =
   | { type: "SET_FIELD"; field: string; value: string }
@@ -185,13 +188,36 @@ function PasswordInput({
 }
 
 function SignUp() {
+  const router = useRouter();
+  const [dataForm, dispatch] = useReducer(formReducer, initialState);
+
   const [state, action, pending] = useActionState(
-    async (_prev: { error?: string; message?: string } | undefined, formData: FormData) => {
-      return await signUp(formData);
+    async (_prev: { error?: string; message?: string } | undefined, formData: FormData): Promise<{ error?: string; message?: string }> => {
+      const fullName = `${dataForm.firstName} ${dataForm.lastname}`.trim();
+      formData.set("fullName", fullName);
+      formData.set("phone", `${dataForm.phoneCountry} ${dataForm.phoneNumber}`);
+      formData.set("birthMonth", dataForm.birthMonth);
+      formData.set("birthDay", dataForm.birthDay);
+      formData.set("birthYear", dataForm.birthYear);
+      formData.set("email", dataForm.email);
+      formData.set("password", dataForm.password);
+
+      const result = await registerUser(formData);
+      if (result.error) return { error: result.error };
+
+      try {
+        const userCredential = await signInWithEmailAndPassword(auth, dataForm.email, dataForm.password);
+        const idToken = await userCredential.user.getIdToken();
+        await createAuthSession(idToken);
+        router.push("/dashboard");
+      } catch {
+        return { message: "Account created. Please sign in." };
+      }
+
+      return {};
     },
     undefined,
   );
-  const [dataForm, dispatch] = useReducer(formReducer, initialState);
 
   type UIAction =
     | { type: "TOGGLE_PASSWORD" }
@@ -242,7 +268,6 @@ function SignUp() {
 
   const rawDigits = dataForm.phoneNumber.replace(/\D/g, "");
   const formattedPhone = formatPhone(rawDigits);
-  const fullPhone = dataForm.phoneNumber ? `${dataForm.phoneCountry} ${formattedPhone}` : "";
   const isValidPhone = !dataForm.phoneNumber || rawDigits.length >= 7;
 
   const getPasswordStrength = (pw: string): { score: number; label: string; color: string } => {
@@ -268,18 +293,6 @@ function SignUp() {
     dataForm.firstName &&
     dataForm.lastname;
 
-  const handleFormAction = async (formData: FormData) => {
-    const fullName = `${dataForm.firstName} ${dataForm.lastname}`.trim();
-    formData.set("fullName", fullName);
-    formData.set("phone", fullPhone);
-    formData.set("birthMonth", dataForm.birthMonth);
-    formData.set("birthDay", dataForm.birthDay);
-    formData.set("birthYear", dataForm.birthYear);
-    formData.set("email", dataForm.email);
-    formData.set("password", dataForm.password);
-    return action(formData);
-  };
-
   return (
     <Card className="w-full border-gray-800/60 bg-gray-900/60 backdrop-blur-xl shadow-2xl shadow-black/30 rounded-2xl overflow-hidden">
       <div className="h-0.5 bg-gradient-to-r from-yellow-400/0 via-yellow-400 to-yellow-400/0" />
@@ -290,7 +303,7 @@ function SignUp() {
         </CardDescription>
       </CardHeader>
       <CardContent className="px-6 pb-2">
-        <form action={handleFormAction}>
+        <form action={action}>
           <div className="flex flex-col gap-4">
             {state?.error && (
               <div className="rounded-xl bg-red-950/50 border border-red-900/50 px-4 py-3 text-sm text-red-400 flex items-center gap-2">
@@ -419,7 +432,7 @@ function SignUp() {
                     <span className={`size-1 rounded-full shrink-0 ${pwStrength.label ? pwStrength.color : "bg-gray-600"}`} />
                     {pwStrength.label}
                     {pwStrength.score >= 2 && pwStrength.score < 4 && (
-                      <span className="text-gray-600">– add uppercase, number, or symbol</span>
+                      <span className="text-gray-600"> &ndash; add uppercase, number, or symbol</span>
                     )}
                   </p>
                 </div>
@@ -485,7 +498,7 @@ function SignUp() {
               {pending ? (
                 <span className="flex items-center gap-2">
                   <span className="size-4 rounded-full border-2 border-black/30 border-t-black animate-spin" />
-                  Creating account…
+                  Creating account...
                 </span>
               ) : (
                 "Sign Up"

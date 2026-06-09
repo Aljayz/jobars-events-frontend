@@ -1,15 +1,15 @@
 import { createClient } from "@/utils/supabase/server";
+import { requireUser } from "@/lib/user";
 import { redirect } from "next/navigation";
 
 export default async function EmployeeSalary() {
+  const user = await requireUser();
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
 
   const { data: records } = await supabase
     .from("salary_records")
     .select("*")
-    .eq("employee_id", user.id)
+    .eq("employee_id", user.uid)
     .order("created_at", { ascending: false })
     .limit(20);
 

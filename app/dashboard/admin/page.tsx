@@ -1,4 +1,5 @@
 import { createClient } from "@/utils/supabase/server";
+import { requireUser } from "@/lib/user";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import BookingStatusCell from "@/components/admin/booking-status";
@@ -80,10 +81,9 @@ export default async function EventsPipeline() {
                   <div className="flex gap-2">
                     <form suppressHydrationWarning action={async () => {
                       "use server";
+                      const user = await requireUser();
                       const supabase = await createClient();
-                      const { data: { user } } = await supabase.auth.getUser();
-                      if (!user) return;
-                      const { error } = await supabase.from("reschedule_requests").update({ status: "approved", reviewed_by: user.id, reviewed_at: new Date().toISOString() }).eq("id", req.id);
+                      const { error } = await supabase.from("reschedule_requests").update({ status: "approved", reviewed_by: user.uid, reviewed_at: new Date().toISOString() }).eq("id", req.id);
                       if (error) { redirect("/dashboard/admin?error=Failed to approve"); }
                       const { error: bookingError } = await supabase.from("events_bookings").update({ event_date: req.requested_date }).eq("id", req.booking_id);
                       if (bookingError) { redirect("/dashboard/admin?error=Failed to approve"); }
@@ -95,10 +95,9 @@ export default async function EventsPipeline() {
                     </form>
                     <form suppressHydrationWarning action={async () => {
                       "use server";
+                      const user = await requireUser();
                       const supabase = await createClient();
-                      const { data: { user } } = await supabase.auth.getUser();
-                      if (!user) return;
-                      const { error } = await supabase.from("reschedule_requests").update({ status: "denied", reviewed_by: user.id, reviewed_at: new Date().toISOString() }).eq("id", req.id);
+                      const { error } = await supabase.from("reschedule_requests").update({ status: "denied", reviewed_by: user.uid, reviewed_at: new Date().toISOString() }).eq("id", req.id);
                       if (error) { redirect("/dashboard/admin?error=Failed to deny"); }
                       redirect("/dashboard/admin");
                     }}>

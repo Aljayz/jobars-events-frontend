@@ -1,4 +1,5 @@
 import { createClient } from "@/utils/supabase/server";
+import { requireUser } from "@/lib/user";
 import { redirect } from "next/navigation";
 import ChatRoomClient from "@/components/chat/chat-room-client";
 
@@ -7,22 +8,18 @@ export default async function ChatRoomPage({
 }: {
   params: Promise<{ room_id: string }>;
 }) {
+  const user = await requireUser();
   const [paramsResult, supabase] = await Promise.all([
     params,
     createClient(),
   ]);
   const { room_id } = paramsResult;
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) redirect("/auth/login");
 
   const { data: membership } = await supabase
     .from("chat_participants")
     .select("id")
     .eq("chat_room_id", room_id)
-    .eq("profile_id", user.id)
+    .eq("profile_id", user.uid)
     .single();
 
   if (!membership) redirect("/dashboard/chat");
@@ -49,7 +46,7 @@ export default async function ChatRoomPage({
   return (
     <ChatRoomClient
       roomId={room_id}
-      userId={user.id}
+      userId={user.uid}
       roomName={roomData?.name as string ?? "Chat"}
       eventType={booking?.event_type as string ?? ""}
       initialMessages={(initialMessages ?? []) as Array<Record<string, unknown>>}

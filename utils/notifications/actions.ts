@@ -1,5 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
+import { requireUser } from "@/lib/user";
 
 interface CreateNotificationInput {
   profileId: string;
@@ -29,12 +30,11 @@ export async function markNotificationRead(formData: FormData) {
 
 export async function markAllNotificationsRead() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return;
+  const user = await requireUser();
   await supabase
     .from("notifications")
     .update({ is_read: true })
-    .eq("profile_id", user.id)
+    .eq("profile_id", user.uid)
     .eq("is_read", false);
   revalidatePath("/dashboard/notifications");
 }

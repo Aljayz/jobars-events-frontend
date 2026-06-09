@@ -1,12 +1,12 @@
 import { createClient } from "@/utils/supabase/server";
+import { requireUser } from "@/lib/user";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Users, Clock, DollarSign, TrendingUp } from "lucide-react";
 
 export default async function HROverview() {
+  const user = await requireUser();
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
 
   const [employeesRes, attendanceRes, cashAdvanceRes] = await Promise.all([
     supabase.from("profiles").select("*", { count: "exact", head: true }).eq("role", "employee"),

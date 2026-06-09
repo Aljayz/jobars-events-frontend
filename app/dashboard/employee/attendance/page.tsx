@@ -1,16 +1,16 @@
 import { createClient } from "@/utils/supabase/server";
+import { requireUser } from "@/lib/user";
 import { redirect } from "next/navigation";
 import { Clock } from "lucide-react";
 
 export default async function EmployeeAttendance() {
+  const user = await requireUser();
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
 
   const { data: logs } = await supabase
     .from("attendance_logs")
     .select("*")
-    .eq("employee_id", user.id)
+    .eq("employee_id", user.uid)
     .order("timestamp", { ascending: false })
     .limit(20);
 
@@ -27,11 +27,10 @@ export default async function EmployeeAttendance() {
         {events.map((event) => (
           <form key={event} action={async () => {
             "use server";
+            const user = await requireUser();
             const supabase = await createClient();
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return;
             const { error } = await supabase.from("attendance_logs").insert({
-              employee_id: user.id,
+              employee_id: user.uid,
               event,
             });
             if (error) { redirect("/dashboard/employee/attendance?error=Failed to log"); }

@@ -1,11 +1,11 @@
 import { createClient } from "@/utils/supabase/server";
+import { requireUser } from "@/lib/user";
 import { redirect } from "next/navigation";
 import { TrendingUp } from "lucide-react";
 
 export default async function HRPromotions() {
+  const user = await requireUser();
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
 
   const [{ data: employees }, { data: recommendations }] = await Promise.all([
     supabase
@@ -15,7 +15,7 @@ export default async function HRPromotions() {
     supabase
       .from("promotion_recommendations")
       .select("*, profiles!promotion_recommendations_employee_id_fkey(full_name)")
-      .eq("recommended_by", user.id)
+      .eq("recommended_by", user.uid)
       .order("created_at", { ascending: false }),
   ]);
 
@@ -33,12 +33,11 @@ export default async function HRPromotions() {
         </h2>
         <form action={async (formData: FormData) => {
           "use server";
+          const user = await requireUser();
           const supabase = await createClient();
-          const { data: { user } } = await supabase.auth.getUser();
-          if (!user) return;
           const { error } = await supabase.from("promotion_recommendations").insert({
             employee_id: formData.get("employee_id") as string,
-            recommended_by: user.id,
+            recommended_by: user.uid,
             promotion_type: "employee_to_staff",
             reason: formData.get("reason") as string || null,
           });

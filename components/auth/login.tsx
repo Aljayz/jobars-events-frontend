@@ -2,6 +2,7 @@
 
 import React from "react";
 import { useActionState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -15,16 +16,70 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Image from "next/image";
 import { Mail, KeyRound, Eye, EyeClosed } from "lucide-react";
-import { signIn, signInWithGoogle } from "@/app/auth/actions";
+import { auth } from "@/lib/firebase/client";
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { createAuthSession, clearAuthSession } from "@/app/auth/actions";
+
+function getFirebaseErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    const code = (error as any).code;
+    switch (code) {
+      case "auth/user-not-found":
+      case "auth/wrong-password":
+      case "auth/invalid-credential":
+        return "Invalid email or password";
+      case "auth/invalid-email":
+        return "Invalid email address";
+      case "auth/user-disabled":
+        return "This account has been disabled";
+      case "auth/too-many-requests":
+        return "Too many attempts. Please try again later";
+      default:
+        return error.message;
+    }
+  }
+  return "An unexpected error occurred";
+}
 
 function Login() {
+  const router = useRouter();
+  const [showPassword, setShowPassword] = React.useState(false);
+  const [googlePending, setGooglePending] = React.useState(false);
+
   const [state, action, pending] = useActionState(
     async (_prev: { error?: string } | undefined, formData: FormData) => {
-      return await signIn(formData);
+      const email = formData.get("email") as string;
+      const password = formData.get("password") as string;
+
+      try {
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const idToken = await userCredential.user.getIdToken();
+        await createAuthSession(idToken);
+        router.push("/dashboard");
+        return undefined;
+      } catch (error) {
+        return { error: getFirebaseErrorMessage(error) };
+      }
     },
     undefined,
   );
-  const [showPassword, setShowPassword] = React.useState(false);
+
+  const handleGoogleSignIn = async () => {
+    setGooglePending(true);
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const idToken = await result.user.getIdToken();
+      await createAuthSession(idToken);
+      router.push("/dashboard");
+    } catch (error: unknown) {
+      if ((error as any)?.code !== "auth/popup-closed-by-user") {
+        await clearAuthSession();
+      }
+    } finally {
+      setGooglePending(false);
+    }
+  };
 
   return (
     <Card className="w-full border-gray-800/60 bg-gray-900/60 backdrop-blur-xl shadow-2xl shadow-black/30 rounded-2xl overflow-hidden">
@@ -94,7 +149,7 @@ function Login() {
               {pending ? (
                 <span className="flex items-center gap-2">
                   <span className="size-4 rounded-full border-2 border-black/30 border-t-black animate-spin" />
-                  Signing in…
+                  Signing in...
                 </span>
               ) : (
                 "Login"
@@ -112,16 +167,25 @@ function Login() {
         </div>
       </div>
       <div className="px-6 pb-6 pt-4">
-        <form action={async () => { await signInWithGoogle(); }}>
-          <Button
-            type="submit"
-            variant="outline"
-            className="w-full h-11 rounded-xl bg-transparent border-gray-700/60 text-gray-300 hover:bg-gray-800/50 hover:text-white hover:border-gray-600 transition-all cursor-pointer"
-          >
-            <Image src="/images/google-favicon.svg" alt="" width={18} height={18} className="mr-2" />
-            Google
-          </Button>
-        </form>
+        <Button
+          type="button"
+          variant="outline"
+          disabled={googlePending}
+          onClick={handleGoogleSignIn}
+          className="w-full h-11 rounded-xl bg-transparent border-gray-700/60 text-gray-300 hover:bg-gray-800/50 hover:text-white hover:border-gray-600 transition-all cursor-pointer"
+        >
+          {googlePending ? (
+            <span className="flex items-center gap-2">
+              <span className="size-4 rounded-full border-2 border-gray-500 border-t-white animate-spin" />
+              Signing in...
+            </span>
+          ) : (
+            <>
+              <Image src="/images/google-favicon.svg" alt="" width={18} height={18} className="mr-2" />
+              Google
+            </>
+          )}
+        </Button>
       </div>
     </Card>
   );

@@ -1,18 +1,18 @@
 import { createClient } from "@/utils/supabase/server";
+import { requireUser } from "@/lib/user";
 import { redirect } from "next/navigation";
 import MilestoneCheckbox from "@/components/client/milestone-checkbox";
 import EventRatingForm from "@/components/ratings/event-rating-form";
 import { CalendarDays, MapPin, Users, Wallet, ListChecks, Star } from "lucide-react";
 
 export default async function ClientTimeline() {
+  const user = await requireUser();
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
 
   const { data: bookings } = await supabase
     .from("events_bookings")
     .select("*")
-    .eq("client_id", user.id)
+    .eq("client_id", user.uid)
     .order("event_date", { ascending: true });
 
   const booking = bookings?.[0];
@@ -38,7 +38,7 @@ export default async function ClientTimeline() {
 
   const [milestonesRes, ratingsRes] = await Promise.all([
     supabase.from("event_milestones").select("*").eq("booking_id", booking.id).order("sort_order", { ascending: true }),
-    supabase.from("event_ratings").select("*").eq("booking_id", booking.id).eq("client_id", user.id).maybeSingle(),
+    supabase.from("event_ratings").select("*").eq("booking_id", booking.id).eq("client_id", user.uid).maybeSingle(),
   ]);
 
   const milestones = milestonesRes.data;

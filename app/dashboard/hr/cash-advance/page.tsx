@@ -1,11 +1,11 @@
 import { createClient } from "@/utils/supabase/server";
+import { requireUser } from "@/lib/user";
 import { redirect } from "next/navigation";
 import { CheckCircle, XCircle } from "lucide-react";
 
 export default async function CashAdvanceManagement() {
+  const user = await requireUser();
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
 
   const { data: requests } = await supabase
     .from("cash_advance_requests")
@@ -38,7 +38,7 @@ export default async function CashAdvanceManagement() {
                   <form suppressHydrationWarning action={async () => {
                     "use server";
                     const supabase = await createClient();
-                    const { error } = await supabase.from("cash_advance_requests").update({ status: "approved", reviewed_by: user.id, reviewed_at: new Date().toISOString() }).eq("id", req.id);
+                    const { error } = await supabase.from("cash_advance_requests").update({ status: "approved", reviewed_by: user.uid, reviewed_at: new Date().toISOString() }).eq("id", req.id);
                     if (error) { redirect("/dashboard/hr/cash-advance?error=Failed to approve"); }
                     redirect("/dashboard/hr/cash-advance?success=Approved");
                   }}>
@@ -49,7 +49,7 @@ export default async function CashAdvanceManagement() {
                   <form suppressHydrationWarning action={async () => {
                     "use server";
                     const supabase = await createClient();
-                    const { error } = await supabase.from("cash_advance_requests").update({ status: "denied", reviewed_by: user.id, reviewed_at: new Date().toISOString() }).eq("id", req.id);
+                    const { error } = await supabase.from("cash_advance_requests").update({ status: "denied", reviewed_by: user.uid, reviewed_at: new Date().toISOString() }).eq("id", req.id);
                     if (error) { redirect("/dashboard/hr/cash-advance?error=Failed to deny"); }
                     redirect("/dashboard/hr/cash-advance?success=Denied");
                   }}>

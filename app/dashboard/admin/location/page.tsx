@@ -1,4 +1,5 @@
 import { createClient } from "@/utils/supabase/server";
+import { requireUser } from "@/lib/user";
 import { redirect } from "next/navigation";
 import { updateTag } from "next/cache";
 import Link from "next/link";
@@ -7,18 +8,17 @@ import { getCachedLocations } from "@/lib/locations";
 import { MapPin, CheckCircle, XCircle, Send, Plus } from "lucide-react";
 
 export default async function LocationManagement() {
+  const user = await requireUser();
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
 
-  const role = user.user_metadata?.role as string;
+  const role = user.role as string;
   const isAdmin = ["admin", "super-admin"].includes(role);
   const isManager = role === "manager" || isAdmin;
 
   const [locations, requestsRes, permRes] = await Promise.all([
     getCachedLocations(),
     supabase.from("location_update_requests").select("*, profiles!location_update_requests_requested_by_fkey(full_name, email)").eq("status", "pending").order("created_at", { ascending: false }),
-    supabase.from("permanent_location_permissions").select("id").eq("manager_id", user.id).eq("is_active", true).maybeSingle(),
+    supabase.from("permanent_location_permissions").select("id").eq("manager_id", user.uid).eq("is_active", true).maybeSingle(),
   ]);
 
   const requests = requestsRes.data ?? [];
@@ -51,9 +51,8 @@ export default async function LocationManagement() {
           </h2>
           <form action={async (formData: FormData) => {
             "use server";
+            const user = await requireUser();
             const supabase = await createClient();
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return;
             let isDirectUpdate = false;
             const [latStr, lngStr] = (formData.get("coordinates") as string).split(",").map(s => s.trim());
             const lat = parseFloat(latStr);
@@ -65,7 +64,7 @@ export default async function LocationManagement() {
               longitude: lng,
             };
 
-            const { data: perm } = await supabase.from("permanent_location_permissions").select("id").eq("manager_id", user.id).eq("is_active", true).maybeSingle();
+            const { data: perm } = await supabase.from("permanent_location_permissions").select("id").eq("manager_id", user.uid).eq("is_active", true).maybeSingle();
             isDirectUpdate = !!perm;
 
             if (perm) {
@@ -75,7 +74,7 @@ export default async function LocationManagement() {
             } else {
               const { error } = await supabase.from("location_update_requests").insert({
                 ...payload,
-                requested_by: user.id,
+                requested_by: user.uid,
                 reason: formData.get("reason") as string || null,
               });
               if (error) { redirect("/dashboard/admin/location?error=Failed to submit"); }
@@ -119,9 +118,8 @@ export default async function LocationManagement() {
           </h2>
           <form action={async (formData: FormData) => {
             "use server";
+            const user = await requireUser();
             const supabase = await createClient();
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return;
             const [latStr, lngStr] = (formData.get("coordinates") as string).split(",").map(s => s.trim());
             const lat = parseFloat(latStr);
             const lng = parseFloat(lngStr);
@@ -130,7 +128,7 @@ export default async function LocationManagement() {
               address: formData.get("address") as string,
               latitude: lat,
               longitude: lng,
-              updated_by: user.id,
+              updated_by: user.uid,
             });
             if (error) { redirect("/dashboard/admin/location?error=Failed to add location"); }
             updateTag("locations");
@@ -213,10 +211,9 @@ export default async function LocationManagement() {
                     <div className="flex gap-2">
                       <form suppressHydrationWarning action={async () => {
                         "use server";
+                        const user = await requireUser();
                         const supabase = await createClient();
-                        const { data: { user } } = await supabase.auth.getUser();
-                        if (!user) return;
-                        const { error: updateError } = await supabase.from("location_update_requests").update({ status: "approved", reviewed_by: user.id, reviewed_at: new Date().toISOString() }).eq("id", req.id as string);
+                        const { error: updateError } = await supabase.from("location_update_requests").update({ status: "approved", reviewed_by: user.uid, reviewed_at: new Date().toISOString() }).eq("id", req.id as string);
                         if (updateError) { redirect("/dashboard/admin/location?error=Failed to approve"); }
                         const { error: insertError } = await supabase.from("business_locations").insert({
                           name: req.name as string,
@@ -234,10 +231,9 @@ export default async function LocationManagement() {
                       </form>
                       <form suppressHydrationWarning action={async () => {
                         "use server";
+                        const user = await requireUser();
                         const supabase = await createClient();
-                        const { data: { user } } = await supabase.auth.getUser();
-                        if (!user) return;
-                        const { error } = await supabase.from("location_update_requests").update({ status: "denied", reviewed_by: user.id, reviewed_at: new Date().toISOString() }).eq("id", req.id as string);
+                        const { error } = await supabase.from("location_update_requests").update({ status: "denied", reviewed_by: user.uid, reviewed_at: new Date().toISOString() }).eq("id", req.id as string);
                         if (error) { redirect("/dashboard/admin/location?error=Failed to deny"); }
                         redirect("/dashboard/admin/location?success=Request denied");
                       }}>

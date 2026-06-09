@@ -2,19 +2,19 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
+import { requireUser } from "@/lib/user";
 
 export async function toggleClientMode() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error("Not authenticated");
+  const user = await requireUser();
 
-  const role = user.user_metadata?.role as string;
+  const role = user.role as string;
   if (role === "external-client" || role === "client") return;
 
   const { data: profile } = await supabase
     .from("profiles")
     .select("client_mode")
-    .eq("id", user.id)
+    .eq("id", user.uid)
     .single();
 
   const newMode = !(profile?.client_mode ?? false);
@@ -22,11 +22,7 @@ export async function toggleClientMode() {
   await supabase
     .from("profiles")
     .update({ client_mode: newMode })
-    .eq("id", user.id);
-
-  await supabase.auth.updateUser({
-    data: { ...user.user_metadata, client_mode: newMode },
-  });
+    .eq("id", user.uid);
 
   revalidatePath("/dashboard");
 }

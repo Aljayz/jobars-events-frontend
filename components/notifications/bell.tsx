@@ -1,17 +1,16 @@
 import { Bell } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
+import { requireUser } from "@/lib/user";
 
 export default async function NotificationBell() {
+  const user = await requireUser();
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) return null;
 
   const { count } = await supabase
     .from("notifications")
     .select("*", { count: "exact", head: true })
-    .eq("profile_id", user.id)
+    .eq("profile_id", user.uid)
     .eq("is_read", false);
 
   return (

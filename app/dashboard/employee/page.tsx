@@ -1,23 +1,23 @@
 import { createClient } from "@/utils/supabase/server";
+import { requireUser } from "@/lib/user";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Clock, DollarSign, ListTodo } from "lucide-react";
 
 export default async function EmployeeOverview() {
+  const user = await requireUser();
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
 
   const [attendanceRes, salaryRes, cashAdvanceRes] = await Promise.all([
-    supabase.from("attendance_logs").select("*", { count: "exact", head: true }).eq("employee_id", user.id),
-    supabase.from("salary_records").select("*", { count: "exact", head: true }).eq("employee_id", user.id).eq("status", "pending"),
-    supabase.from("cash_advance_requests").select("*", { count: "exact", head: true }).eq("employee_id", user.id).eq("status", "approved"),
+    supabase.from("attendance_logs").select("*", { count: "exact", head: true }).eq("employee_id", user.uid),
+    supabase.from("salary_records").select("*", { count: "exact", head: true }).eq("employee_id", user.uid).eq("status", "pending"),
+    supabase.from("cash_advance_requests").select("*", { count: "exact", head: true }).eq("employee_id", user.uid).eq("status", "approved"),
   ]);
 
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-2xl font-bold">Welcome, {user.user_metadata?.full_name as string ?? "Employee"}</h1>
+        <h1 className="text-2xl font-bold">Welcome, {user.full_name as string ?? "Employee"}</h1>
         <p className="mt-1 text-gray-400">Your work overview at a glance.</p>
       </div>
 
