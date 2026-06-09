@@ -39,7 +39,10 @@ export async function verifySessionCookie(session: string): Promise<FirebaseUser
   try {
     const decoded = await adminAuth.verifySessionCookie(session, true);
     return mapFirebaseUser(decoded);
-  } catch {
+  } catch (error) {
+    if (process.env.NODE_ENV === "development") {
+      console.error("Firebase session cookie verification failed:", error);
+    }
     return null;
   }
 }

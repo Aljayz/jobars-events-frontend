@@ -22,6 +22,22 @@ export async function createAuthSession(idToken: string) {
   });
 }
 
+export async function createSessionAndRedirect(idToken: string) {
+  const expiresIn = 60 * 60 * 24 * 14 * 1000; // 14 days
+
+  const sessionCookie = await adminAuth.createSessionCookie(idToken, { expiresIn });
+
+  const cookieStore = await cookies();
+  cookieStore.set(SESSION_COOKIE, sessionCookie, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: expiresIn / 1000,
+    path: "/",
+  });
+  redirect("/dashboard");
+}
+
 export async function clearAuthSession() {
   const cookieStore = await cookies();
   cookieStore.set(SESSION_COOKIE, "", {

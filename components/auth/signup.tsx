@@ -2,7 +2,6 @@
 
 import React from "react";
 import { useActionState, useReducer } from "react";
-import { useRouter } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -27,7 +26,7 @@ import TermConditionDialog from "./terms-condition/termConditionDialog";
 import { Dialog, DialogTrigger, DialogContent } from "../ui/dialog";
 import { auth } from "@/lib/firebase/client";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { registerUser, createAuthSession } from "@/app/auth/actions";
+import { registerUser, createSessionAndRedirect } from "@/app/auth/actions";
 
 type FormAction =
   | { type: "SET_FIELD"; field: string; value: string }
@@ -188,7 +187,6 @@ function PasswordInput({
 }
 
 function SignUp() {
-  const router = useRouter();
   const [dataForm, dispatch] = useReducer(formReducer, initialState);
 
   const [state, action, pending] = useActionState(
@@ -208,8 +206,7 @@ function SignUp() {
       try {
         const userCredential = await signInWithEmailAndPassword(auth, dataForm.email, dataForm.password);
         const idToken = await userCredential.user.getIdToken();
-        await createAuthSession(idToken);
-        router.push("/dashboard");
+        await createSessionAndRedirect(idToken);
       } catch {
         return { message: "Account created. Please sign in." };
       }

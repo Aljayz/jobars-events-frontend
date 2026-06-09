@@ -2,7 +2,6 @@
 
 import React from "react";
 import { useActionState } from "react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -18,7 +17,7 @@ import Image from "next/image";
 import { Mail, KeyRound, Eye, EyeClosed } from "lucide-react";
 import { auth } from "@/lib/firebase/client";
 import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
-import { createAuthSession, clearAuthSession } from "@/app/auth/actions";
+import { createSessionAndRedirect, clearAuthSession } from "@/app/auth/actions";
 
 function getFirebaseErrorMessage(error: unknown): string {
   if (error instanceof Error) {
@@ -42,7 +41,6 @@ function getFirebaseErrorMessage(error: unknown): string {
 }
 
 function Login() {
-  const router = useRouter();
   const [showPassword, setShowPassword] = React.useState(false);
   const [googlePending, setGooglePending] = React.useState(false);
 
@@ -54,8 +52,7 @@ function Login() {
       try {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         const idToken = await userCredential.user.getIdToken();
-        await createAuthSession(idToken);
-        router.push("/dashboard");
+        await createSessionAndRedirect(idToken);
         return undefined;
       } catch (error) {
         return { error: getFirebaseErrorMessage(error) };
@@ -70,8 +67,7 @@ function Login() {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
       const idToken = await result.user.getIdToken();
-      await createAuthSession(idToken);
-      router.push("/dashboard");
+      await createSessionAndRedirect(idToken);
     } catch (error: unknown) {
       if ((error as any)?.code !== "auth/popup-closed-by-user") {
         await clearAuthSession();
