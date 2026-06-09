@@ -9,13 +9,19 @@ const roleLabels: Record<string, string> = {
 }
 
 export async function TeamGrid() {
-  const supabase = await createClient()
-  const { data: team } = await supabase
-    .from("profiles")
-    .select("id, full_name, avatar_url, role")
-    .in("role", ["admin", "manager", "staff"])
-    .order("role", { ascending: true })
-    .limit(8)
+  let team: { id: string; full_name: string; avatar_url: string | null; role: string }[] | null = null;
+  try {
+    const supabase = await createClient()
+    const { data } = await supabase
+      .from("profiles")
+      .select("id, full_name, avatar_url, role")
+      .in("role", ["admin", "manager", "staff"])
+      .order("role", { ascending: true })
+      .limit(8)
+    team = data;
+  } catch {
+    // env vars unavailable during build/prerender — skip team section
+  }
 
   if (!team || team.length === 0) {
     return null
