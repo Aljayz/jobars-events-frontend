@@ -26,27 +26,36 @@ function extractCoordinates(url: string): { lat: number; lng: number } | null {
   return null;
 }
 
+function extractSrcFromIframe(input: string): string {
+  const match = input.match(/<iframe[^>]*src=["']([^"']+)["'][^>]*>/i);
+  return match ? match[1] : input;
+}
+
 export async function resolveGoogleMapsUrl(input: string): Promise<ResolvedMap> {
-  const domain = (input.match(/^https?:\/\/([^\/]+)/) || [])[1];
+  const raw = extractSrcFromIframe(input.trim());
+
+  const domain = (raw.match(/^https?:\/\/([^\/]+)/) || [])[1];
 
   if (!domain) {
-    throw new Error("Invalid URL. Please paste a full Google Maps link starting with https://");
+    throw new Error(
+      "Could not find a Google Maps URL. Paste the entire embed code from Google Maps (Share → Embed a map → Medium → Copy) or just the iframe src URL starting with https://www.google.com/maps/embed?pb=...",
+    );
   }
 
-  if (domain.includes("google") && (domain.includes("goo.gl") || input.includes("maps.app.goo.gl"))) {
+  if (domain.includes("goo.gl") || raw.includes("maps.app.goo.gl")) {
     throw new Error(
-      "This looks like a mobile app share link. Open Google Maps on your computer, search for the location, click Share → Embed a map, and paste the iframe src URL starting with https://www.google.com/maps/embed?pb=...",
+      "This looks like a mobile app share link. Open Google Maps on your computer, search for the location, click Share → Embed a map, select Medium size, and paste the entire embed code.",
     );
   }
 
   if (!domain.includes("google.com")) {
-    throw new Error("Please paste a Google Maps URL (starting with https://www.google.com/maps/...)");
+    throw new Error("Please paste a Google Maps embed URL (starting with https://www.google.com/maps/embed?pb=...)");
   }
 
   let resolvedUrl: string;
 
   try {
-    const resp = await fetch(input, { method: "HEAD", redirect: "follow", signal: AbortSignal.timeout(5000) });
+    const resp = await fetch(raw, { method: "HEAD", redirect: "follow", signal: AbortSignal.timeout(5000) });
     resolvedUrl = resp.url;
   } catch {
     throw new Error("Could not reach the URL. Check the link and try again.");

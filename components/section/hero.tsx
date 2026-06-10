@@ -87,7 +87,7 @@ async function Hero() {
             <div className='relative hidden lg:block'>
                 {/* Visual Placeholder for Event Image */}
                 <div className='aspect-square rounded-3xl bg-gradient-to-tr from-gray-800 to-gray-700 border border-gray-600 shadow-2xl overflow-hidden relative group'>
-                    <div className='absolute inset-0 bg-[url("https://images.unsplash.com/photo-1511795409834-ef04bbd61622?q=80&w=2069&auto=format&fit=crop")] bg-cover bg-center opacity-80 group-hover:scale-110 transition-transform duration-700'></div>
+                    <div className='absolute inset-0 bg-cover bg-center opacity-80 group-hover:scale-110 transition-transform duration-700' style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1511795409834-ef04bbd61622?q=80&w=2069&auto=format&fit=crop")' }}></div>
                     <div className='absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent'></div>
                     
                     <div className='absolute bottom-8 left-8 right-8 p-6 rounded-2xl bg-black/40 backdrop-blur-md border border-white/10'>

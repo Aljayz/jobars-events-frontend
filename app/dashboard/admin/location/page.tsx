@@ -100,8 +100,8 @@ export default async function LocationManagement() {
             </div>
             <div className="sm:col-span-2">
               <label htmlFor="maps_url" className="mb-1 block text-xs text-gray-500">Google Maps Link</label>
-              <input id="maps_url" name="maps_url" type="url" required className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-gray-200 focus:border-yellow-400 focus:outline-none" placeholder="https://www.google.com/maps/embed?pb=!1m18!..." />
-              <p className="mt-1 text-xs text-gray-500">Open Google Maps → Share → Embed a map → select <strong>Medium</strong> size → copy the iframe src URL.</p>
+              <input id="maps_url" name="maps_url" required className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-gray-200 focus:border-yellow-400 focus:outline-none" placeholder="<iframe src=&quot;https://www.google.com/maps/embed?pb=!1m18!...&quot; ...>" />
+              <p className="mt-1 text-xs text-gray-500">Open Google Maps → Share → Embed a map → select <strong>Medium</strong> size → paste the entire embed code here.</p>
             </div>
             {!hasPermanentPerm && (
               <div className="sm:col-span-2">
@@ -162,8 +162,8 @@ export default async function LocationManagement() {
             </div>
             <div className="sm:col-span-2">
               <label htmlFor="maps_url" className="mb-1 block text-xs text-gray-500">Google Maps Link</label>
-              <input id="maps_url" name="maps_url" type="url" required className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-gray-200 focus:border-yellow-400 focus:outline-none" placeholder="https://www.google.com/maps/embed?pb=!1m18!..." />
-              <p className="mt-1 text-xs text-gray-500">Open Google Maps → Share → Embed a map → select <strong>Medium</strong> size → copy the iframe src URL.</p>
+              <input id="maps_url" name="maps_url" required className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-gray-200 focus:border-yellow-400 focus:outline-none" placeholder="<iframe src=&quot;https://www.google.com/maps/embed?pb=!1m18!...&quot; ...>" />
+              <p className="mt-1 text-xs text-gray-500">Open Google Maps → Share → Embed a map → select <strong>Medium</strong> size → paste the entire embed code here.</p>
             </div>
             <div className="flex items-end">
               <button type="submit" className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-all">Add Location</button>
