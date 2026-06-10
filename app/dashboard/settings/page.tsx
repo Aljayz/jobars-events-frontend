@@ -1,5 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 import { requireUser } from "@/lib/user";
+import Image from "next/image";
 import { updateProfile } from "./actions";
 import PasswordResetButton from "./password-reset";
 import DangerZone from "./danger-zone";
@@ -34,9 +35,13 @@ export default async function SettingsPage() {
 
         <form action={updateProfile} className="space-y-5">
           <div className="flex items-center gap-4 pb-5 border-b border-gray-800">
-            <div className="flex size-16 items-center justify-center rounded-full bg-yellow-400/20 text-2xl font-bold text-yellow-400">
-              {initials}
-            </div>
+            {user.avatar_url ? (
+              <Image src={user.avatar_url} alt="" width={64} height={64} className="size-16 rounded-full object-cover ring-2 ring-yellow-400/30" />
+            ) : (
+              <div className="flex size-16 items-center justify-center rounded-full bg-yellow-400/20 text-2xl font-bold text-yellow-400">
+                {initials}
+              </div>
+            )}
             <div>
               <p className="text-lg font-medium text-gray-200">{displayName}</p>
               <p className="text-sm text-gray-500 capitalize">{displayRole}</p>

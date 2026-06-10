@@ -25,8 +25,8 @@ import {
 import TermConditionDialog from "./terms-condition/termConditionDialog";
 import { Dialog, DialogTrigger, DialogContent } from "../ui/dialog";
 import { firebaseAuth } from "@/lib/firebase/client";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { registerUser, createAuthSession } from "@/app/auth/actions";
+import { signInWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
+import { registerUser } from "@/app/auth/actions";
 
 type FormAction =
   | { type: "SET_FIELD"; field: string; value: string }
@@ -282,15 +282,15 @@ function SignUp() {
 
       try {
         const userCredential = await signInWithEmailAndPassword(firebaseAuth(), dataForm.email, dataForm.password);
-        const idToken = await userCredential.user.getIdToken();
-        await createAuthSession(idToken);
-        window.location.href = "/dashboard";
+        await sendEmailVerification(userCredential.user, {
+          url: `${window.location.origin}/auth/verify-email`,
+          handleCodeInApp: true,
+        });
+        window.location.href = `/auth/verify-email?email=${encodeURIComponent(dataForm.email)}`;
         return {};
       } catch {
         return { message: "Account created. Please sign in." };
       }
-
-      return {};
     },
     undefined,
   );

@@ -1,6 +1,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { requireUser } from "@/lib/user";
 import Link from "next/link";
+import Image from "next/image";
 import {
   CalendarCheck, Bell, MessageSquare, ListChecks, LayoutGrid,
   TrendingUp, Clock, Users, ClipboardList, ArrowRight,
@@ -177,9 +178,13 @@ export default async function DashboardHome() {
         <div className="absolute -right-20 -top-20 size-64 rounded-full bg-yellow-400/5 blur-[100px]" />
         <div className="absolute -bottom-20 -left-20 size-64 rounded-full bg-yellow-400/3 blur-[100px]" />
         <div className="relative flex items-start gap-5">
-          <div className={`hidden sm:flex size-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${roleColors[displayRole] ?? "from-gray-500 to-gray-600"} text-2xl font-bold text-white shadow-lg`}>
-            {getInitials(user.full_name)}
-          </div>
+          {user.avatar_url ? (
+            <Image src={user.avatar_url} alt="" width={64} height={64} className="hidden sm:block size-16 shrink-0 rounded-2xl object-cover shadow-lg ring-2 ring-gray-700" />
+          ) : (
+            <div className={`hidden sm:flex size-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${roleColors[displayRole] ?? "from-gray-500 to-gray-600"} text-2xl font-bold text-white shadow-lg`}>
+              {getInitials(user.full_name)}
+            </div>
+          )}
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-3">
               <h1 className="text-2xl font-bold text-white sm:text-3xl">

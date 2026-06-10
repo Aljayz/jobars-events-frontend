@@ -33,17 +33,17 @@ export default async function ChatRoomPage({
   const [roomResult, messagesResult, participantsResult] = await Promise.all([
     supabase
       .from("chat_rooms")
-      .select("id, name, events_bookings(event_type, profiles(full_name))")
+      .select("id, name, events_bookings(event_type, profiles(full_name, avatar_url))")
       .eq("id", room_id)
       .single(),
     supabase
       .from("messages")
-      .select("id, content, created_at, sender_id, profiles!sender_id(full_name, role)")
+      .select("id, content, created_at, sender_id, profiles!sender_id(full_name, role, avatar_url)")
       .eq("chat_room_id", room_id)
       .order("created_at", { ascending: true }),
     supabase
       .from("chat_participants")
-      .select("profile_id, profiles!inner(full_name, role)")
+      .select("profile_id, profiles!inner(full_name, role, avatar_url)")
       .eq("chat_room_id", room_id),
   ]);
 
@@ -57,11 +57,14 @@ export default async function ChatRoomPage({
       profile_id: (p.profile_id as string) ?? "",
       full_name: (profile.full_name as string) ?? "",
       role: (profile.role as string) ?? "",
+      avatar_url: (profile.avatar_url as string) ?? null,
     };
   });
 
   const roomData = room as Record<string, unknown> | null;
   const booking = roomData?.events_bookings as Record<string, unknown> | null;
+  const bookingProfiles = (booking?.profiles ?? []) as Array<Record<string, unknown>>;
+  const bookingProfile = (bookingProfiles[0] ?? {}) as Record<string, unknown>;
 
   return (
     <ChatRoomClient
@@ -69,6 +72,7 @@ export default async function ChatRoomPage({
       userId={user.uid}
       userRole={user.role}
       roomName={roomData?.name as string ?? "Chat"}
+      roomAvatarUrl={(bookingProfile.avatar_url as string) ?? null}
       eventType={booking?.event_type as string ?? ""}
       initialMessages={(initialMessages ?? []) as Array<Record<string, unknown>>}
       participants={participants}

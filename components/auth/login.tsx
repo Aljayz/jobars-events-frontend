@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import Image from "next/image";
 import { Eye, EyeClosed } from "lucide-react";
 import { firebaseAuth } from "@/lib/firebase/client";
-import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, sendEmailVerification } from "firebase/auth";
 import { createAuthSession, clearAuthSession } from "@/app/auth/actions";
 
 function getFirebaseErrorMessage(error: unknown): string {
@@ -51,7 +51,15 @@ function Login() {
 
       try {
         const userCredential = await signInWithEmailAndPassword(firebaseAuth(), email, password);
-        const idToken = await userCredential.user.getIdToken();
+        if (!userCredential.user.emailVerified) {
+          await sendEmailVerification(userCredential.user, {
+            url: `${window.location.origin}/auth/verify-email`,
+            handleCodeInApp: true,
+          });
+          window.location.href = `/auth/verify-email?email=${encodeURIComponent(email)}`;
+          return undefined;
+        }
+        const idToken = await userCredential.user.getIdToken(true);
         await createAuthSession(idToken);
         window.location.href = "/dashboard";
         return undefined;

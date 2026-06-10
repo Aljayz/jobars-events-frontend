@@ -1,9 +1,10 @@
 import { createClient } from "@/utils/supabase/server";
 import { requireUser } from "@/lib/user";
 import Link from "next/link";
+import Image from "next/image";
 import SignOutButton from "@/components/auth/sign-out-button";
 import ChatShell from "@/components/chat/chat-shell";
-import { MessageSquare, LayoutGrid, Archive, ArchiveRestore, Trash2 } from "lucide-react";
+import { MessageSquare, LayoutGrid, Archive, ArchiveRestore, Trash2, User } from "lucide-react";
 import type { ReactNode } from "react";
 
 function getInitials(name: string) {
@@ -18,7 +19,7 @@ export default async function ChatLayout({ children }: { children: ReactNode }) 
 
   const { data: participantRows } = await supabase
     .from("chat_participants")
-    .select("archived_at, chat_room_id, chat_rooms!inner(id, name, booking_id, events_bookings!inner(event_type, client_id, profiles!inner(full_name)))")
+    .select("archived_at, chat_room_id, chat_rooms!inner(id, name, booking_id, events_bookings!inner(event_type, client_id, profiles!inner(full_name, avatar_url)))")
     .eq("profile_id", user.uid);
 
   const allRooms = ((participantRows ?? []) as Array<Record<string, unknown>>).map((p) => {
@@ -32,6 +33,7 @@ export default async function ChatLayout({ children }: { children: ReactNode }) 
       id: (room.id as string) ?? "",
       name: (room.name as string) ?? "Chat",
       full_name: (profile.full_name as string) ?? "Client",
+      avatar_url: (profile.avatar_url as string) ?? null,
       event_type: (booking.event_type as string) ?? "",
       client_id: (booking.client_id as string) ?? "",
       archived_at: (p.archived_at as string) ?? null,
@@ -112,16 +114,20 @@ export default async function ChatLayout({ children }: { children: ReactNode }) 
   );
 }
 
-function RoomRow({ room }: { room: { id: string; name: string; full_name: string; event_type: string } }) {
+function RoomRow({ room }: { room: { id: string; name: string; full_name: string; avatar_url: string | null; event_type: string } }) {
   return (
     <div className="group relative">
       <Link
         href={`/chat/${room.id}`}
         className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-gray-300 hover:bg-gray-800/80 transition-colors"
       >
-        <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-gray-800 text-xs font-bold text-gray-400 group-hover:bg-gray-700 transition-colors">
-          {getInitials(room.full_name)}
-        </div>
+        {room.avatar_url ? (
+          <Image src={room.avatar_url} alt="" width={36} height={36} className="size-9 shrink-0 rounded-full object-cover ring-1 ring-gray-700" />
+        ) : (
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-gray-800 text-xs font-bold text-gray-400 group-hover:bg-gray-700 transition-colors">
+            {getInitials(room.full_name)}
+          </div>
+        )}
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between">
             <span className="font-medium truncate">{room.full_name}</span>
@@ -157,16 +163,20 @@ function RoomRow({ room }: { room: { id: string; name: string; full_name: string
   );
 }
 
-function ArchivedRoomRow({ room }: { room: { id: string; name: string; full_name: string; event_type: string } }) {
+function ArchivedRoomRow({ room }: { room: { id: string; name: string; full_name: string; avatar_url: string | null; event_type: string } }) {
   return (
     <div className="group relative">
       <Link
         href={`/chat/${room.id}`}
         className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-gray-500 hover:bg-gray-800/50 transition-colors"
       >
-        <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-gray-800/60 text-[10px] font-bold text-gray-500">
-          {getInitials(room.full_name)}
-        </div>
+        {room.avatar_url ? (
+          <Image src={room.avatar_url} alt="" width={32} height={32} className="size-8 shrink-0 rounded-full object-cover ring-1 ring-gray-700/60" />
+        ) : (
+          <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-gray-800/60 text-[10px] font-bold text-gray-500">
+            {getInitials(room.full_name)}
+          </div>
+        )}
         <div className="min-w-0 flex-1">
           <span className="truncate text-xs">{room.full_name}</span>
           <p className="text-[10px] text-gray-600 capitalize truncate">{room.event_type}</p>

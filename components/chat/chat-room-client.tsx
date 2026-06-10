@@ -3,8 +3,9 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { sendMessage } from "@/app/chat/actions";
-import { Send, CheckCheck, ArrowLeft } from "lucide-react";
+import { Send, CheckCheck, ArrowLeft, User } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 
 function getInitials(name: string) {
   return name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
@@ -34,6 +35,7 @@ export default function ChatRoomClient({
   userId,
   userRole,
   roomName,
+  roomAvatarUrl,
   eventType,
   initialMessages,
   participants,
@@ -42,9 +44,10 @@ export default function ChatRoomClient({
   userId: string;
   userRole: string;
   roomName: string;
+  roomAvatarUrl: string | null;
   eventType: string;
   initialMessages: Record<string, unknown>[];
-  participants: { profile_id: string; full_name: string; role: string }[];
+  participants: { profile_id: string; full_name: string; role: string; avatar_url: string | null }[];
 }) {
   const [messages, setMessages] = useState(initialMessages);
   const [presence, setPresence] = useState<Record<string, { user_id: string; full_name?: string }[]>>({});
@@ -60,7 +63,7 @@ export default function ChatRoomClient({
   const isOnline = (uid: string) => onlineUsers.includes(uid);
 
   const participantMap = useMemo(
-    () => new Map(participants.map((p) => [p.profile_id, { full_name: p.full_name, role: p.role }])),
+    () => new Map(participants.map((p) => [p.profile_id, { full_name: p.full_name, role: p.role, avatar_url: p.avatar_url }])),
     [participants]
   );
 
@@ -143,9 +146,13 @@ export default function ChatRoomClient({
           >
             <ArrowLeft className="size-4" />
           </Link>
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-yellow-400/20 text-xs font-bold text-yellow-400">
-            {getInitials(roomName)}
-          </div>
+          {roomAvatarUrl ? (
+            <Image src={roomAvatarUrl} alt="" width={36} height={36} className="size-9 shrink-0 rounded-full object-cover ring-1 ring-gray-700" />
+          ) : (
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-yellow-400/20 text-xs font-bold text-yellow-400">
+              {getInitials(roomName)}
+            </div>
+          )}
           <div className="min-w-0">
             <h1 className="font-semibold text-gray-100 text-sm truncate">{roomName}</h1>
             <div className="flex items-center gap-1.5">
@@ -157,11 +164,16 @@ export default function ChatRoomClient({
           </div>
         </div>
         <div className="flex -gap-x-2 shrink-0">
-          {onlineUsers.slice(0, 5).map((uid) => (
-            <div key={uid} className="size-7 rounded-full border-2 border-gray-900 bg-gray-700 flex items-center justify-center text-[10px] font-medium text-gray-300">
-              {getInitials(participantMap.get(uid)?.full_name ?? uid)}
-            </div>
-          ))}
+          {onlineUsers.slice(0, 5).map((uid) => {
+            const p = participantMap.get(uid);
+            return p?.avatar_url ? (
+              <Image key={uid} src={p.avatar_url} alt="" width={28} height={28} className="size-7 rounded-full border-2 border-gray-900 object-cover" />
+            ) : (
+              <div key={uid} className="size-7 rounded-full border-2 border-gray-900 bg-gray-700 flex items-center justify-center text-[10px] font-medium text-gray-300">
+                {getInitials(p?.full_name ?? uid)}
+              </div>
+            );
+          })}
           {onlineUsers.length > 5 && (
             <div className="size-7 rounded-full border-2 border-gray-900 bg-gray-800 flex items-center justify-center text-[10px] text-gray-500">
               +{onlineUsers.length - 5}
@@ -194,7 +206,7 @@ export default function ChatRoomClient({
             <div className="space-y-4">
               {msgs.map((msg, idx) => {
                 const isMe = msg.sender_id === userId;
-                const profile = msg.profiles as { full_name: string; role?: string } | null;
+                const profile = msg.profiles as { full_name: string; role?: string; avatar_url?: string } | null;
                 const senderName = profile?.full_name ?? "Unknown";
                 const senderRole = profile?.role ?? participantMap.get(msg.sender_id as string)?.role ?? "";
                 const prev = msgs[idx - 1];
@@ -205,9 +217,13 @@ export default function ChatRoomClient({
                 return (
                   <div key={msg.id as string} className={`flex items-end gap-2 ${isMe ? "flex-row-reverse" : ""}`}>
                     {showSender && (
-                      <div className={`flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${nameColor(senderName)}`}>
-                        {getInitials(senderName)}
-                      </div>
+                      profile?.avatar_url ? (
+                        <Image src={profile.avatar_url} alt="" width={32} height={32} className="size-8 shrink-0 rounded-full object-cover ring-1 ring-gray-700" />
+                      ) : (
+                        <div className={`flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${nameColor(senderName)}`}>
+                          {getInitials(senderName)}
+                        </div>
+                      )
                     )}
                     {!showSender && !isMe && <div className="w-8 shrink-0" />}
                     <div className={`flex flex-col ${isMe ? "items-end" : "items-start"} max-w-[85%] sm:max-w-md`}>

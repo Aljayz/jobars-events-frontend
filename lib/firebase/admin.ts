@@ -1,5 +1,7 @@
 import { SignJWT, jwtVerify, createRemoteJWKSet } from "jose";
 import type { JWTPayload } from "jose";
+import { initializeApp, getApps, cert, getApp } from "firebase-admin/app";
+import { getAuth } from "firebase-admin/auth";
 
 const PROJECT_ID = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 const FIREBASE_JWKS = createRemoteJWKSet(
@@ -15,14 +17,19 @@ function decodeBase64(str: string): string {
   return Buffer.from(str, "base64").toString("utf-8");
 }
 
-function getServiceAccount(): Record<string, string> {
+function getAdminAuth() {
   const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
   if (!raw) throw new Error("FIREBASE_SERVICE_ACCOUNT is not set");
-  return JSON.parse(decodeBase64(raw));
+  if (!getApps().length) {
+    initializeApp({ credential: cert(JSON.parse(decodeBase64(raw))) });
+  }
+  return getAuth();
 }
 
 function getSessionSigningKey() {
-  const sa = getServiceAccount();
+  const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
+  if (!raw) throw new Error("FIREBASE_SERVICE_ACCOUNT is not set");
+  const sa = JSON.parse(decodeBase64(raw)) as Record<string, string>;
   return new TextEncoder().encode(sa.private_key.slice(-64));
 }
 
@@ -42,9 +49,9 @@ function mapFirebaseUser(payload: JWTPayload): FirebaseUser {
     email: (payload.email as string) ?? null,
     role: (payload.role as string) ?? "external-client",
     client_mode: (payload.client_mode as boolean) ?? false,
-    full_name: (payload.full_name as string) ?? null,
+    full_name: (payload.full_name as string) ?? (payload.name as string) ?? null,
     email_verified: (payload.email_verified as boolean) ?? false,
-    avatar_url: (payload.picture as string) ?? null,
+    avatar_url: (payload.picture as string) ?? (payload.avatar_url as string) ?? null,
   };
 }
 
@@ -87,100 +94,28 @@ export async function verifySessionCookie(session: string): Promise<FirebaseUser
   }
 }
 
-async function getOAuth2Token(): Promise<string> {
-  const sa = getServiceAccount();
-  const now = Math.floor(Date.now() / 1000);
-  const body = {
-    iss: sa.client_email,
-    scope: "https://www.googleapis.com/auth/firebase.auth https://www.googleapis.com/auth/cloud-platform",
-    aud: "https://oauth2.googleapis.com/token",
-    exp: now + 3600,
-    iat: now,
-  };
-  const algorithm = { name: "RSASSA-PKCS1-v1_5", hash: { name: "SHA-256" } };
-  const privateKey = await crypto.subtle.importKey(
-    "pkcs8",
-    pemToArrayBuffer(sa.private_key),
-    algorithm,
-    false,
-    ["sign"],
-  );
-  const header = { alg: "RS256", typ: "JWT" };
-  const b64 = (obj: unknown) =>
-    btoa(JSON.stringify(obj)).replace(/=+$/, "").replace(/\+/g, "-").replace(/\//g, "_");
-  const payload = `${b64(header)}.${b64(body)}`;
-  const sig = await crypto.subtle.sign(algorithm, privateKey, new TextEncoder().encode(payload));
-  const jwt = `${payload}.${b64(new Uint8Array(sig))}`;
-  const res = await fetch("https://oauth2.googleapis.com/token", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({ grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer", assertion: jwt }),
-  });
-  const data = await res.json() as { access_token?: string; error_description?: string };
-  if (!data.access_token) throw new Error(`OAuth2 token exchange failed: ${data.error_description ?? "unknown"}`);
-  return data.access_token;
-}
-
-function pemToArrayBuffer(pem: string): ArrayBuffer {
-  const b64 = pem.replace(/-----BEGIN [\w ]+-----/, "").replace(/-----END [\w ]+-----/, "").replace(/\s/g, "");
-  const bytes = typeof Buffer === "undefined"
-    ? atob(b64).split("").map((c) => c.charCodeAt(0))
-    : [...Buffer.from(b64, "base64")];
-  return new Uint8Array(bytes).buffer;
-}
-
 export async function adminCreateUser(email: string, password: string, displayName: string): Promise<string> {
-  const token = await getOAuth2Token();
-  const res = await fetch(
-    `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${process.env.NEXT_PUBLIC_FIREBASE_API_KEY}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ email, password, displayName, returnSecureToken: false }),
-    },
-  );
-  const data = await res.json() as { localId?: string; error?: { message: string } };
-  if (!data.localId) throw new Error(data.error?.message ?? "Failed to create user");
-  return data.localId;
+  const user = await getAdminAuth().createUser({ email, password, displayName });
+  return user.uid;
 }
 
 export async function adminSetCustomClaims(uid: string, claims: Record<string, unknown>): Promise<void> {
-  const token = await getOAuth2Token();
-  const res = await fetch(
-    `https://identitytoolkit.googleapis.com/v1/accounts:update?key=${process.env.NEXT_PUBLIC_FIREBASE_API_KEY}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ localId: uid, customAttributes: JSON.stringify(claims) }),
-    },
-  );
-  const data = await res.json() as { error?: { message: string } };
-  if (data.error) throw new Error(data.error.message);
+  await getAdminAuth().setCustomUserClaims(uid, claims);
 }
 
 export async function adminGetUserByEmail(email: string): Promise<{ uid: string } | null> {
-  const token = await getOAuth2Token();
-  const res = await fetch(
-    `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${process.env.NEXT_PUBLIC_FIREBASE_API_KEY}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ email: [email] }),
-    },
-  );
-  const data = await res.json() as { users?: Array<{ localId: string }>; error?: { message: string } };
-  if (data.error || !data.users?.length) return null;
-  return { uid: data.users[0].localId };
+  try {
+    const user = await getAdminAuth().getUserByEmail(email);
+    return { uid: user.uid };
+  } catch {
+    return null;
+  }
+}
+
+export async function adminDeleteUser(uid: string): Promise<void> {
+  await getAdminAuth().deleteUser(uid);
 }
 
 export async function adminRevokeRefreshTokens(uid: string): Promise<void> {
-  const token = await getOAuth2Token();
-  await fetch(
-    `https://identitytoolkit.googleapis.com/v1/accounts:update?key=${process.env.NEXT_PUBLIC_FIREBASE_API_KEY}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ localId: uid, validSince: Math.floor(Date.now() / 1000) }),
-    },
-  );
+  await getAdminAuth().revokeRefreshTokens(uid);
 }

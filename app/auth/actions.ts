@@ -92,10 +92,8 @@ export async function registerUser(formData: FormData) {
     const supabase = await createClient();
     await supabase.from("profiles").insert({
       id: uid,
-      full_name: fullName,
       phone: phone || null,
       birthdate: birthdate || null,
-      role: "external-client",
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Sign up failed";

@@ -1,5 +1,6 @@
 import { createClient } from "@/utils/supabase/server"
-import { Star, Quote } from "lucide-react"
+import Image from "next/image"
+import { Star, Quote, User } from "lucide-react"
 
 export async function Testimonials() {
   const supabase = await createClient()
@@ -50,9 +51,18 @@ export async function Testimonials() {
                     />
                   ))}
                 </div>
-                <p className="text-sm font-semibold text-white">
-                  {profile?.full_name ?? "Anonymous"}
-                </p>
+                <div className="flex items-center gap-2">
+                  {profile?.avatar_url ? (
+                    <Image src={profile.avatar_url} alt="" width={28} height={28} className="size-7 rounded-full object-cover ring-1 ring-gray-700" />
+                  ) : (
+                    <div className="flex size-7 items-center justify-center rounded-full bg-gray-800">
+                      <User className="size-3.5 text-gray-500" />
+                    </div>
+                  )}
+                  <p className="text-sm font-semibold text-white">
+                    {profile?.full_name ?? "Anonymous"}
+                  </p>
+                </div>
               </div>
             )
           })}
