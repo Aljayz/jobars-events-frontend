@@ -55,24 +55,12 @@ function createDummyClient(): ReturnType<typeof createSupabaseClient> {
 
 export function createClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!supabaseUrl || !supabaseAnonKey) {
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!supabaseUrl || !supabaseKey) {
     if (typeof window === "undefined" && process.env.NODE_ENV === "production") {
       return createDummyClient();
     }
-    throw new Error("NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY must be set");
+    throw new Error("NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set");
   }
-  return createSupabaseClient(supabaseUrl, supabaseAnonKey);
-}
-
-function createServiceClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!supabaseUrl || !supabaseServiceKey) {
-    if (typeof window === "undefined" && process.env.NODE_ENV === "production") {
-      return createDummyClient();
-    }
-    throw new Error("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set");
-  }
-  return createSupabaseClient(supabaseUrl, supabaseServiceKey);
+  return createSupabaseClient(supabaseUrl, supabaseKey);
 }

@@ -24,16 +24,13 @@ async function syncProfile(idToken: string) {
 
   try {
     const supabase = await createClient();
-    await supabase.from("profiles").upsert(
-      {
-        id: user.uid,
-        full_name: user.full_name,
-        email: user.email,
-        avatar_url: user.avatar_url,
-        role: user.role,
-      },
-      { onConflict: "id" },
-    );
+    await supabase.rpc("upsert_profile", {
+      p_id: user.uid,
+      p_full_name: user.full_name,
+      p_email: user.email,
+      p_avatar_url: user.avatar_url,
+      p_role: user.role,
+    });
   } catch {
     // non-critical — session cookie is still valid
   }

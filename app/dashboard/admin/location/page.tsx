@@ -77,14 +77,21 @@ export default async function LocationManagement() {
             isDirectUpdate = !!perm;
 
             if (perm) {
-              const { error } = await supabase.from("business_locations").insert(payload);
+              const { error } = await supabase.rpc("insert_business_location", {
+                p_name: payload.name,
+                p_address: payload.address,
+                p_maps_url: payload.maps_url,
+                p_updated_by: user.uid,
+              });
               if (error) { redirect("/dashboard/admin/location?error=Failed to submit"); }
               updateTag("locations");
             } else {
-              const { error } = await supabase.from("location_update_requests").insert({
-                ...payload,
-                requested_by: user.uid,
-                reason: formData.get("reason") as string || null,
+              const { error } = await supabase.rpc("insert_location_update_request", {
+                p_name: payload.name,
+                p_address: payload.address,
+                p_maps_url: payload.maps_url,
+                p_requested_by: user.uid,
+                p_reason: formData.get("reason") as string || null,
               });
               if (error) { redirect("/dashboard/admin/location?error=Failed to submit"); }
             }
@@ -142,11 +149,11 @@ export default async function LocationManagement() {
               redirect(`/dashboard/admin/location?error=${encodeURIComponent(mapError)}`);
             }
 
-            const { error } = await supabase.from("business_locations").insert({
-              name: formData.get("name") as string,
-              address: formData.get("address") as string,
-              maps_url,
-              updated_by: user.uid,
+            const { error } = await supabase.rpc("insert_business_location", {
+              p_name: formData.get("name") as string,
+              p_address: formData.get("address") as string,
+              p_maps_url: maps_url,
+              p_updated_by: user.uid,
             });
             if (error) { redirect("/dashboard/admin/location?error=Failed to add location"); }
             updateTag("locations");
@@ -194,10 +201,8 @@ export default async function LocationManagement() {
                   <form action={async () => {
                     "use server";
                     const supabase = await createClient();
-                    const { error: unsetError } = await supabase.from("business_locations").update({ is_primary: false }).neq("is_primary", false);
-                    if (unsetError) { redirect("/dashboard/admin/location?error=Failed to update"); }
-                    const { error: setError } = await supabase.from("business_locations").update({ is_primary: true }).eq("id", loc.id as string);
-                    if (setError) { redirect("/dashboard/admin/location?error=Failed to update"); }
+                    const { error } = await supabase.rpc("set_primary_location", { p_id: loc.id as string });
+                    if (error) { redirect("/dashboard/admin/location?error=Failed to update"); }
                     updateTag("locations");
                     redirect("/dashboard/admin/location?success=Primary location updated");
                   }}>
@@ -231,12 +236,17 @@ export default async function LocationManagement() {
                       <form suppressHydrationWarning action={async () => {
                         "use server";
                         const [user, supabase] = await Promise.all([requireUser(), createClient()]);
-                        const { error: updateError } = await supabase.from("location_update_requests").update({ status: "approved", reviewed_by: user.uid, reviewed_at: new Date().toISOString() }).eq("id", req.id as string);
-                        if (updateError) { redirect("/dashboard/admin/location?error=Failed to approve"); }
-                        const { error: insertError } = await supabase.from("business_locations").insert({
-                          name: req.name as string,
-                          address: req.address as string,
-                          maps_url: req.maps_url as string,
+                        const { error: reviewError } = await supabase.rpc("review_location_request", {
+                          p_id: req.id as string,
+                          p_status: "approved",
+                          p_reviewed_by: user.uid,
+                        });
+                        if (reviewError) { redirect("/dashboard/admin/location?error=Failed to approve"); }
+                        const { error: insertError } = await supabase.rpc("insert_business_location", {
+                          p_name: req.name as string,
+                          p_address: req.address as string,
+                          p_maps_url: req.maps_url as string,
+                          p_updated_by: user.uid,
                         });
                         if (insertError) { redirect("/dashboard/admin/location?error=Failed to approve"); }
                         updateTag("locations");
@@ -249,7 +259,11 @@ export default async function LocationManagement() {
                       <form suppressHydrationWarning action={async () => {
                         "use server";
                         const [user, supabase] = await Promise.all([requireUser(), createClient()]);
-                        const { error } = await supabase.from("location_update_requests").update({ status: "denied", reviewed_by: user.uid, reviewed_at: new Date().toISOString() }).eq("id", req.id as string);
+                        const { error } = await supabase.rpc("review_location_request", {
+                          p_id: req.id as string,
+                          p_status: "denied",
+                          p_reviewed_by: user.uid,
+                        });
                         if (error) { redirect("/dashboard/admin/location?error=Failed to deny"); }
                         redirect("/dashboard/admin/location?success=Request denied");
                       }}>
