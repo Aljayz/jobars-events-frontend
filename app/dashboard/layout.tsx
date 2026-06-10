@@ -5,7 +5,8 @@ import NotificationBell from "@/components/notifications/bell";
 import SidebarNav from "@/components/layout/sidebar-nav";
 import ClientModeToggle from "@/components/client-mode/toggle-button";
 import FlashBanner from "@/components/ui/flash-banner";
-import { Home } from "lucide-react";
+import { Home, User } from "lucide-react";
+import Image from "next/image";
 import type { ReactNode } from "react";
 
 interface NavItem {
@@ -132,7 +133,18 @@ export default async function DashboardLayout({ children }: { children: ReactNod
             </Link>
             <div className="flex flex-1 items-center justify-end gap-1 sm:gap-2">
               <NotificationBell />
-              <span className="hidden text-sm text-gray-500 sm:inline">{user.full_name}</span>
+              <div className="hidden sm:flex items-center gap-2">
+                {user.avatar_url ? (
+                  <Image src={user.avatar_url} alt="" width={28} height={28} className="size-7 rounded-full object-cover ring-1 ring-gray-700" />
+                ) : (
+                  <div className="size-7 rounded-full bg-gray-800 flex items-center justify-center ring-1 ring-gray-700">
+                    <span className="text-xs font-medium text-gray-400">
+                      {user.full_name?.charAt(0)?.toUpperCase() ?? <User className="size-3.5" />}
+                    </span>
+                  </div>
+                )}
+                <span className="text-sm text-gray-500">{user.full_name}</span>
+              </div>
               <SignOutButton />
             </div>
           </div>

@@ -7,9 +7,42 @@ import { createClient } from "@/utils/supabase/server";
 
 const SESSION_COOKIE = "__session";
 
+async function syncProfile(idToken: string) {
+  const user = await verifyIdToken(idToken);
+  if (!user) return;
+
+  const claims: Record<string, string | boolean | null> = {
+    role: user.role,
+    client_mode: user.client_mode,
+    full_name: user.full_name,
+  };
+  try {
+    await adminSetCustomClaims(user.uid, claims);
+  } catch {
+    // user may already have claims — ignore
+  }
+
+  try {
+    const supabase = await createClient();
+    await supabase.from("profiles").upsert(
+      {
+        id: user.uid,
+        full_name: user.full_name,
+        email: user.email,
+        avatar_url: user.avatar_url,
+        role: user.role,
+      },
+      { onConflict: "id" },
+    );
+  } catch {
+    // non-critical — session cookie is still valid
+  }
+}
+
 export async function createAuthSession(idToken: string) {
   const expiresIn = 60 * 60 * 24 * 14; // 14 days
   const sessionCookie = await createSessionCookie(idToken);
+  await syncProfile(idToken);
   const cookieStore = await cookies();
   cookieStore.set(SESSION_COOKIE, sessionCookie, {
     httpOnly: true,
@@ -18,20 +51,6 @@ export async function createAuthSession(idToken: string) {
     maxAge: expiresIn,
     path: "/",
   });
-}
-
-export async function createSessionAndRedirect(idToken: string) {
-  const expiresIn = 60 * 60 * 24 * 14; // 14 days
-  const sessionCookie = await createSessionCookie(idToken);
-  const cookieStore = await cookies();
-  cookieStore.set(SESSION_COOKIE, sessionCookie, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    maxAge: expiresIn,
-    path: "/",
-  });
-  redirect("/dashboard");
 }
 
 export async function clearAuthSession() {

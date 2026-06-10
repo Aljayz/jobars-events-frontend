@@ -33,6 +33,7 @@ export interface FirebaseUser {
   client_mode: boolean;
   full_name: string | null;
   email_verified: boolean;
+  avatar_url: string | null;
 }
 
 function mapFirebaseUser(payload: JWTPayload): FirebaseUser {
@@ -43,6 +44,7 @@ function mapFirebaseUser(payload: JWTPayload): FirebaseUser {
     client_mode: (payload.client_mode as boolean) ?? false,
     full_name: (payload.full_name as string) ?? null,
     email_verified: (payload.email_verified as boolean) ?? false,
+    avatar_url: (payload.picture as string) ?? null,
   };
 }
 
