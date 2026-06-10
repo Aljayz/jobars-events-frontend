@@ -1,4 +1,5 @@
 import { createClient } from "@/utils/supabase/server";
+import { parseMapsUrl } from "@/lib/maps";
 import { MapPin } from "lucide-react";
 
 export default async function Map() {
@@ -10,8 +11,9 @@ export default async function Map() {
     .limit(1);
 
   const primary = locations?.[0];
-  const lat: number | null = primary?.latitude as number | null ?? 8.728785;
-  const lng: number | null = primary?.longitude as number | null ?? 125.7488967;
+  const coords = parseMapsUrl(primary?.maps_url as string | null);
+  const lat: number = coords?.lat ?? 8.728785;
+  const lng: number = coords?.lng ?? 125.7488967;
   const address = primary?.address as string ?? "PPHX+GH Jobars Events, City of Bayugan, Agusan del Sur";
 
   const mapSrc = `https://www.google.com/maps?q=${lat},${lng}&z=15&output=embed`;

@@ -5,6 +5,7 @@ import { updateTag } from "next/cache";
 import Link from "next/link";
 import FlashBanner from "@/components/ui/flash-banner";
 import { getCachedLocations } from "@/lib/locations";
+import { resolveGoogleMapsUrl } from "@/lib/maps";
 import { MapPin, CheckCircle, XCircle, Send, Plus } from "lucide-react";
 
 export default async function LocationManagement() {
@@ -52,14 +53,24 @@ export default async function LocationManagement() {
             "use server";
             const [user, supabase] = await Promise.all([requireUser(), createClient()]);
             let isDirectUpdate = false;
-            const [latStr, lngStr] = (formData.get("coordinates") as string).split(",").map(s => s.trim());
-            const lat = parseFloat(latStr);
-            const lng = parseFloat(lngStr);
+            let maps_url = "";
+            let mapError: string | null = null;
+
+            try {
+              const resolved = await resolveGoogleMapsUrl(formData.get("maps_url") as string);
+              maps_url = resolved.maps_url;
+            } catch (e) {
+              mapError = (e as Error).message;
+            }
+
+            if (mapError) {
+              redirect(`/dashboard/admin/location?error=${encodeURIComponent(mapError)}`);
+            }
+
             const payload = {
               name: formData.get("name") as string,
               address: formData.get("address") as string,
-              latitude: lat,
-              longitude: lng,
+              maps_url,
             };
 
             const { data: perm } = await supabase.from("permanent_location_permissions").select("id").eq("manager_id", user.uid).eq("is_active", true).maybeSingle();
@@ -88,9 +99,9 @@ export default async function LocationManagement() {
               <input id="address" name="address" required className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-gray-200 focus:border-yellow-400 focus:outline-none" placeholder="Full street address" />
             </div>
             <div className="sm:col-span-2">
-              <label htmlFor="coordinates" className="mb-1 block text-xs text-gray-500">Coordinates (lat, lng)</label>
-              <input id="coordinates" name="coordinates" required className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-gray-200 focus:border-yellow-400 focus:outline-none" placeholder="8.729327, 125.748846" />
-              <p className="mt-1 text-xs text-gray-500">Copy lat,lng from Google Maps or any map service</p>
+              <label htmlFor="maps_url" className="mb-1 block text-xs text-gray-500">Google Maps Link</label>
+              <input id="maps_url" name="maps_url" type="url" required className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-gray-200 focus:border-yellow-400 focus:outline-none" placeholder="https://maps.app.goo.gl/..." />
+              <p className="mt-1 text-xs text-gray-500">Paste a Google Maps link. Coordinates will be extracted automatically.</p>
             </div>
             {!hasPermanentPerm && (
               <div className="sm:col-span-2">
@@ -117,14 +128,24 @@ export default async function LocationManagement() {
           <form action={async (formData: FormData) => {
             "use server";
             const [user, supabase] = await Promise.all([requireUser(), createClient()]);
-            const [latStr, lngStr] = (formData.get("coordinates") as string).split(",").map(s => s.trim());
-            const lat = parseFloat(latStr);
-            const lng = parseFloat(lngStr);
+            let maps_url = "";
+            let mapError: string | null = null;
+
+            try {
+              const resolved = await resolveGoogleMapsUrl(formData.get("maps_url") as string);
+              maps_url = resolved.maps_url;
+            } catch (e) {
+              mapError = (e as Error).message;
+            }
+
+            if (mapError) {
+              redirect(`/dashboard/admin/location?error=${encodeURIComponent(mapError)}`);
+            }
+
             const { error } = await supabase.from("business_locations").insert({
               name: formData.get("name") as string,
               address: formData.get("address") as string,
-              latitude: lat,
-              longitude: lng,
+              maps_url,
               updated_by: user.uid,
             });
             if (error) { redirect("/dashboard/admin/location?error=Failed to add location"); }
@@ -140,8 +161,8 @@ export default async function LocationManagement() {
               <input id="address" name="address" required className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-gray-200 focus:border-yellow-400 focus:outline-none" />
             </div>
             <div className="sm:col-span-2">
-              <label htmlFor="coordinates" className="mb-1 block text-xs text-gray-500">Coordinates (lat, lng)</label>
-              <input id="coordinates" name="coordinates" required className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-gray-200 focus:border-yellow-400 focus:outline-none" placeholder="8.729327, 125.748846" />
+              <label htmlFor="maps_url" className="mb-1 block text-xs text-gray-500">Google Maps Link</label>
+              <input id="maps_url" name="maps_url" type="url" required className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-gray-200 focus:border-yellow-400 focus:outline-none" placeholder="https://maps.app.goo.gl/..." />
             </div>
             <div className="flex items-end">
               <button type="submit" className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-all">Add Location</button>
@@ -214,8 +235,7 @@ export default async function LocationManagement() {
                         const { error: insertError } = await supabase.from("business_locations").insert({
                           name: req.name as string,
                           address: req.address as string,
-                          latitude: req.latitude as number | null,
-                          longitude: req.longitude as number | null,
+                          maps_url: req.maps_url as string,
                         });
                         if (insertError) { redirect("/dashboard/admin/location?error=Failed to approve"); }
                         updateTag("locations");
