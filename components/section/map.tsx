@@ -11,12 +11,13 @@ export default async function Map() {
     .limit(1);
 
   const primary = locations?.[0];
-  const coords = parseMapsUrl(primary?.maps_url as string | null);
-  const lat: number = coords?.lat ?? 8.728785;
-  const lng: number = coords?.lng ?? 125.7488967;
+  const mapsUrl = primary?.maps_url as string | null;
+  const coords = parseMapsUrl(mapsUrl);
   const address = primary?.address as string ?? "PPHX+GH Jobars Events, City of Bayugan, Agusan del Sur";
 
-  const mapSrc = `https://www.google.com/maps?q=${lat},${lng}&z=15&output=embed`;
+  const mapSrc = coords
+    ? `https://www.google.com/maps?q=${coords.lat},${coords.lng}&z=15&output=embed`
+    : mapsUrl ?? "https://www.google.com/maps?q=8.728785,125.7488967&z=15&output=embed";
 
   return (
     <section className="bg-gray-950 py-16 sm:py-24">
@@ -49,7 +50,7 @@ export default async function Map() {
 
         <div className="mt-4 text-center">
           <a
-            href={`https://www.google.com/maps/dir//${lat},${lng}/@${lat},${lng},15z`}
+            href={coords ? `https://www.google.com/maps/dir//${coords.lat},${coords.lng}/@${coords.lat},${coords.lng},15z` : mapsUrl ?? "#"}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 text-sm text-yellow-400 hover:text-yellow-300 transition-colors"

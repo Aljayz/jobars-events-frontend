@@ -1,10 +1,13 @@
 export interface ResolvedMap {
   maps_url: string;
-  lat: number;
-  lng: number;
+  lat: number | null;
+  lng: number | null;
 }
 
 function extractCoordinates(url: string): { lat: number; lng: number } | null {
+  const pb = url.match(/[?&]pb=!1m[^&]*!3d(-?\d+\.?\d*)!4d(-?\d+\.?\d*)/);
+  if (pb) return { lat: parseFloat(pb[1]), lng: parseFloat(pb[2]) };
+
   const at = url.match(/@(-?\d+\.?\d*),(-?\d+\.?\d*)/);
   if (at) return { lat: parseFloat(at[1]), lng: parseFloat(at[2]) };
 
@@ -18,6 +21,22 @@ function extractCoordinates(url: string): { lat: number; lng: number } | null {
 }
 
 export async function resolveGoogleMapsUrl(input: string): Promise<ResolvedMap> {
+  const domain = (input.match(/^https?:\/\/([^\/]+)/) || [])[1];
+
+  if (!domain) {
+    throw new Error("Invalid URL. Please paste a full Google Maps link starting with https://");
+  }
+
+  if (domain.includes("google") && (domain.includes("goo.gl") || input.includes("maps.app.goo.gl"))) {
+    throw new Error(
+      "This looks like a mobile app share link. Open Google Maps on your computer, search for the location, click Share → Embed a map, and paste the iframe src URL starting with https://www.google.com/maps/embed?pb=...",
+    );
+  }
+
+  if (!domain.includes("google.com")) {
+    throw new Error("Please paste a Google Maps URL (starting with https://www.google.com/maps/...)");
+  }
+
   let resolvedUrl: string;
 
   try {
@@ -28,13 +47,8 @@ export async function resolveGoogleMapsUrl(input: string): Promise<ResolvedMap> 
   }
 
   const coords = extractCoordinates(resolvedUrl);
-  if (!coords) {
-    throw new Error(
-      "Could not find coordinates in the Google Maps link. Make sure it's a valid Google Maps URL with a pinned location.",
-    );
-  }
 
-  return { maps_url: resolvedUrl, ...coords };
+  return { maps_url: resolvedUrl, lat: coords?.lat ?? null, lng: coords?.lng ?? null };
 }
 
 export function parseMapsUrl(mapsUrl: string | null | undefined): { lat: number; lng: number } | null {
