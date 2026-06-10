@@ -13,7 +13,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
-import { Mail, KeyRound, Eye, EyeClosed, Phone, User, CalendarDays, ArrowLeft, ArrowRight, Check } from "lucide-react";
+import { Mail, KeyRound, Eye, EyeClosed, User, CalendarDays, ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { Checkbox } from "../ui/checkbox";
 import {
   Select,
@@ -26,7 +26,7 @@ import TermConditionDialog from "./terms-condition/termConditionDialog";
 import { Dialog, DialogTrigger, DialogContent } from "../ui/dialog";
 import { firebaseAuth } from "@/lib/firebase/client";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { registerUser, createSessionAndRedirect } from "@/app/auth/actions";
+import { registerUser, createAuthSession } from "@/app/auth/actions";
 
 type FormAction =
   | { type: "SET_FIELD"; field: string; value: string }
@@ -217,14 +217,13 @@ function PasswordInput({
 }) {
   return (
     <div className="relative group">
-      <KeyRound className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-gray-500 group-focus-within:text-yellow-400 transition-colors z-10" />
       <Input
         id={id}
         type={showPassword ? "text" : "password"}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         required
-        className={`pl-10 pr-10 bg-gray-800/90 border-gray-700 text-white placeholder-gray-600 focus:border-yellow-400/60 focus:ring-1 focus:ring-yellow-400/20 h-12 rounded-xl transition-all ${
+        className={`pl-4 pr-10 bg-gray-800/90 border-gray-700 text-white placeholder-gray-600 focus:border-yellow-400/60 focus:ring-1 focus:ring-yellow-400/20 h-12 rounded-xl transition-all ${
           hasError ? "border-red-500/60" : ""
         }`}
       />
@@ -284,7 +283,9 @@ function SignUp() {
       try {
         const userCredential = await signInWithEmailAndPassword(firebaseAuth(), dataForm.email, dataForm.password);
         const idToken = await userCredential.user.getIdToken();
-        await createSessionAndRedirect(idToken);
+        await createAuthSession(idToken);
+        window.location.href = "/dashboard";
+        return {};
       } catch {
         return { message: "Account created. Please sign in." };
       }
@@ -366,22 +367,21 @@ function SignUp() {
               <Label className="text-sm font-medium text-gray-300">Full Name</Label>
               <div className="flex gap-2">
                 <div className="relative group flex-1">
-                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-gray-500 group-focus-within:text-yellow-400 transition-colors z-10" />
                   <Input
                     value={dataForm.firstName}
                     required
                     onChange={(e) => dispatch({ type: "SET_FIELD", field: "firstName", value: e.target.value })}
                     placeholder="First"
-                    className="pl-10 bg-gray-800/90 border-gray-700 text-white placeholder-gray-600 focus:border-yellow-400/60 focus:ring-1 focus:ring-yellow-400/20 h-11 rounded-xl transition-all"
+                    className="pl-4 bg-gray-800/90 border-gray-700 text-white placeholder-gray-600 focus:border-yellow-400/60 focus:ring-1 focus:ring-yellow-400/20 h-11 rounded-xl transition-all"
                   />
                 </div>
-                <div className="flex-1">
+                <div className="relative group flex-1">
                   <Input
                     value={dataForm.lastname}
                     required
                     onChange={(e) => dispatch({ type: "SET_FIELD", field: "lastname", value: e.target.value })}
                     placeholder="Last"
-                    className="bg-gray-800/90 border-gray-700 text-white placeholder-gray-600 focus:border-yellow-400/60 focus:ring-1 focus:ring-yellow-400/20 h-11 rounded-xl transition-all"
+                    className="pl-4 bg-gray-800/90 border-gray-700 text-white placeholder-gray-600 focus:border-yellow-400/60 focus:ring-1 focus:ring-yellow-400/20 h-11 rounded-xl transition-all"
                   />
                 </div>
               </div>
@@ -409,7 +409,6 @@ function SignUp() {
                   </SelectContent>
                 </Select>
                 <div className="relative flex-1 group">
-                  <Phone className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-gray-500 group-focus-within:text-yellow-400 transition-colors z-10" />
                   <Input
                     id="phone"
                     type="tel"
@@ -419,7 +418,7 @@ function SignUp() {
                       dispatch({ type: "SET_FIELD", field: "phoneNumber", value: digits });
                     }}
                     placeholder="968 666 6783"
-                    className={`pl-10 rounded-l-none rounded-r-xl bg-gray-800/90 border-gray-700 text-white placeholder-gray-600 focus:border-yellow-400/60 focus:ring-1 focus:ring-yellow-400/20 h-11 transition-all ${
+                    className={`pl-4 rounded-l-none rounded-r-xl bg-gray-800/90 border-gray-700 text-white placeholder-gray-600 focus:border-yellow-400/60 focus:ring-1 focus:ring-yellow-400/20 h-11 transition-all ${
                       dataForm.phoneNumber && !isValidPhone ? "border-red-500/60" : ""
                     }`}
                   />
@@ -430,15 +429,14 @@ function SignUp() {
             <div className="grid gap-1.5">
               <Label htmlFor="email" className="text-sm font-medium text-gray-300">Email</Label>
               <div className="relative group">
-                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-gray-500 group-focus-within:text-yellow-400 transition-colors z-10" />
                 <Input
                   id="email"
                   type="email"
                   value={dataForm.email}
+                  required
                   onChange={(e) => dispatch({ type: "SET_FIELD", field: "email", value: e.target.value })}
                   placeholder="example@gmail.com"
-                  required
-                  className={`pl-10 pr-4 bg-gray-800/90 border-gray-700 text-white placeholder-gray-600 focus:border-yellow-400/60 focus:ring-1 focus:ring-yellow-400/20 h-11 rounded-xl transition-all ${
+                  className={`pl-4 bg-gray-800/90 border-gray-700 text-white placeholder-gray-600 focus:border-yellow-400/60 focus:ring-1 focus:ring-yellow-400/20 h-11 rounded-xl transition-all ${
                     dataForm.email && !isValidEmail ? "border-red-500/60" : ""
                   }`}
                 />
@@ -591,26 +589,27 @@ function SignUp() {
                 <div className="grid gap-1.5">
                   <Label className="text-sm font-medium text-gray-300">First Name</Label>
                   <div className="relative group">
-                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-gray-500 group-focus-within:text-yellow-400 transition-colors z-10" />
                     <Input
                       value={dataForm.firstName}
                       required
                       onChange={(e) => dispatch({ type: "SET_FIELD", field: "firstName", value: e.target.value })}
                       placeholder="John"
-                      className="pl-10 bg-gray-800/90 border-gray-700 text-white placeholder-gray-600 focus:border-yellow-400/60 focus:ring-1 focus:ring-yellow-400/20 h-12 rounded-xl transition-all"
+                      className="pl-4 bg-gray-800/90 border-gray-700 text-white placeholder-gray-600 focus:border-yellow-400/60 focus:ring-1 focus:ring-yellow-400/20 h-12 rounded-xl transition-all"
                     />
                   </div>
                 </div>
 
                 <div className="grid gap-1.5">
                   <Label className="text-sm font-medium text-gray-300">Last Name</Label>
-                  <Input
-                    value={dataForm.lastname}
-                    required
-                    onChange={(e) => dispatch({ type: "SET_FIELD", field: "lastname", value: e.target.value })}
-                    placeholder="Doe"
-                    className="bg-gray-800/90 border-gray-700 text-white placeholder-gray-600 focus:border-yellow-400/60 focus:ring-1 focus:ring-yellow-400/20 h-12 rounded-xl transition-all"
-                  />
+                  <div className="relative group">
+                    <Input
+                      value={dataForm.lastname}
+                      required
+                      onChange={(e) => dispatch({ type: "SET_FIELD", field: "lastname", value: e.target.value })}
+                      placeholder="Doe"
+                      className="pl-4 bg-gray-800/90 border-gray-700 text-white placeholder-gray-600 focus:border-yellow-400/60 focus:ring-1 focus:ring-yellow-400/20 h-12 rounded-xl transition-all"
+                    />
+                  </div>
                 </div>
 
                 <div className="grid gap-1.5">
@@ -666,7 +665,6 @@ function SignUp() {
                       </SelectContent>
                     </Select>
                     <div className="relative flex-1 group">
-                      <Phone className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-gray-500 group-focus-within:text-yellow-400 transition-colors z-10" />
                       <Input
                         id="phone"
                         type="tel"
@@ -676,7 +674,7 @@ function SignUp() {
                           dispatch({ type: "SET_FIELD", field: "phoneNumber", value: digits });
                         }}
                         placeholder="968 666 6783"
-                        className={`pl-10 rounded-l-none rounded-r-xl bg-gray-800/90 border-gray-700 text-white placeholder-gray-600 focus:border-yellow-400/60 focus:ring-1 focus:ring-yellow-400/20 h-12 transition-all ${
+                        className={`pl-4 rounded-l-none rounded-r-xl bg-gray-800/90 border-gray-700 text-white placeholder-gray-600 focus:border-yellow-400/60 focus:ring-1 focus:ring-yellow-400/20 h-12 transition-all ${
                           dataForm.phoneNumber && !isValidPhone ? "border-red-500/60" : ""
                         }`}
                       />
@@ -687,7 +685,6 @@ function SignUp() {
                 <div className="grid gap-1.5">
                   <Label htmlFor="email-mob" className="text-sm font-medium text-gray-300">Email</Label>
                   <div className="relative group">
-                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-gray-500 group-focus-within:text-yellow-400 transition-colors z-10" />
                     <Input
                       id="email-mob"
                       type="email"
@@ -695,7 +692,7 @@ function SignUp() {
                       onChange={(e) => dispatch({ type: "SET_FIELD", field: "email", value: e.target.value })}
                       placeholder="example@gmail.com"
                       required
-                      className={`pl-10 pr-4 bg-gray-800/90 border-gray-700 text-white placeholder-gray-600 focus:border-yellow-400/60 focus:ring-1 focus:ring-yellow-400/20 h-12 rounded-xl transition-all ${
+                      className={`pl-4 pr-4 bg-gray-800/90 border-gray-700 text-white placeholder-gray-600 focus:border-yellow-400/60 focus:ring-1 focus:ring-yellow-400/20 h-12 rounded-xl transition-all ${
                         dataForm.email && !isValidEmail ? "border-red-500/60" : ""
                       }`}
                     />

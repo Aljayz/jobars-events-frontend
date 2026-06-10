@@ -14,10 +14,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Image from "next/image";
-import { Mail, KeyRound, Eye, EyeClosed } from "lucide-react";
+import { Eye, EyeClosed } from "lucide-react";
 import { firebaseAuth } from "@/lib/firebase/client";
 import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
-import { createSessionAndRedirect, clearAuthSession } from "@/app/auth/actions";
+import { createAuthSession, clearAuthSession } from "@/app/auth/actions";
 
 function getFirebaseErrorMessage(error: unknown): string {
   if (error instanceof Error) {
@@ -52,7 +52,8 @@ function Login() {
       try {
         const userCredential = await signInWithEmailAndPassword(firebaseAuth(), email, password);
         const idToken = await userCredential.user.getIdToken();
-        await createSessionAndRedirect(idToken);
+        await createAuthSession(idToken);
+        window.location.href = "/dashboard";
         return undefined;
       } catch (error) {
         return { error: getFirebaseErrorMessage(error) };
@@ -67,10 +68,11 @@ function Login() {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(firebaseAuth(), provider);
       const idToken = await result.user.getIdToken();
-      await createSessionAndRedirect(idToken);
+      await createAuthSession(idToken);
+      window.location.href = "/dashboard";
     } catch (error: unknown) {
       if ((error as { code?: string })?.code !== "auth/popup-closed-by-user") {
-        await clearAuthSession();
+        console.error("Google sign-in failed:", error);
       }
     } finally {
       setGooglePending(false);
@@ -98,14 +100,13 @@ function Login() {
             <div className="grid gap-1.5">
               <Label htmlFor="email" className="text-sm font-medium text-gray-300">Email</Label>
               <div className="relative group">
-                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-gray-500 group-focus-within:text-yellow-400 transition-colors z-10" />
                 <Input
                   id="email"
                   name="email"
                   type="email"
                   placeholder="example@gmail.com"
                   required
-                  className="pl-10 pr-4 bg-gray-800/90 border-gray-700 text-white placeholder-gray-600 focus:border-yellow-400/60 focus:ring-1 focus:ring-yellow-400/20 h-12 rounded-xl transition-all"
+                  className="pl-4 pr-4 bg-gray-800/90 border-gray-700 text-white placeholder-gray-600 focus:border-yellow-400/60 focus:ring-1 focus:ring-yellow-400/20 h-12 rounded-xl transition-all"
                 />
               </div>
             </div>
@@ -117,13 +118,12 @@ function Login() {
                 </button>
               </div>
               <div className="relative group">
-                <KeyRound className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-gray-500 group-focus-within:text-yellow-400 transition-colors z-10" />
                 <Input
                   id="password"
                   name="password"
                   type={showPassword ? "text" : "password"}
                   required
-                  className="pl-10 pr-10 bg-gray-800/90 border-gray-700 text-white placeholder-gray-600 focus:border-yellow-400/60 focus:ring-1 focus:ring-yellow-400/20 h-12 rounded-xl transition-all"
+                  className="pl-4 pr-10 bg-gray-800/90 border-gray-700 text-white placeholder-gray-600 focus:border-yellow-400/60 focus:ring-1 focus:ring-yellow-400/20 h-12 rounded-xl transition-all"
                 />
                 <button
                   type="button"

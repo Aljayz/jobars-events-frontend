@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "build": "next build",
-    "dev": "next dev -H 100.111.4.100 --webpack",
+    "dev": "next dev",
     "start": "next start",
     "lint": "eslint",
     "doctor": "npx react-doctor@latest",
