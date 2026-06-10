@@ -13,7 +13,7 @@ export default async function LocationManagement() {
 
   const role = user.role as string;
   const isAdmin = ["admin", "super-admin"].includes(role);
-  const isManager = role === "manager" || isAdmin;
+  const isManager = role === "manager";
 
   const [locations, requestsRes, permRes] = await Promise.all([
     getCachedLocations(),
@@ -52,6 +52,15 @@ export default async function LocationManagement() {
           <form action={async (formData: FormData) => {
             "use server";
             const [user, supabase] = await Promise.all([requireUser(), createClient()]);
+
+            await supabase.rpc("upsert_profile", {
+              p_id: user.uid,
+              p_full_name: user.full_name,
+              p_email: user.email,
+              p_avatar_url: user.avatar_url,
+              p_role: user.role,
+            });
+
             let isDirectUpdate = false;
             let maps_url = "";
             let mapError: string | null = null;
@@ -137,6 +146,14 @@ export default async function LocationManagement() {
             const [user, supabase] = await Promise.all([requireUser(), createClient()]);
             let maps_url = "";
             let mapError: string | null = null;
+
+            await supabase.rpc("upsert_profile", {
+              p_id: user.uid,
+              p_full_name: user.full_name,
+              p_email: user.email,
+              p_avatar_url: user.avatar_url,
+              p_role: user.role,
+            });
 
             try {
               const resolved = await resolveGoogleMapsUrl(formData.get("maps_url") as string);
