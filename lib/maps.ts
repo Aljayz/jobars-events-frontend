@@ -5,8 +5,14 @@ export interface ResolvedMap {
 }
 
 function extractCoordinates(url: string): { lat: number; lng: number } | null {
-  const pb = url.match(/[?&]pb=!1m[^&]*!3d(-?\d+\.?\d*)!4d(-?\d+\.?\d*)/);
-  if (pb) return { lat: parseFloat(pb[1]), lng: parseFloat(pb[2]) };
+  const pbMatch = url.match(/[?&]pb=([^&]+)/);
+  if (pbMatch) {
+    const pb = pbMatch[1];
+    const place = pb.match(/!2d(-?\d+\.?\d*)!3d(-?\d+\.?\d*)/);
+    if (place) return { lat: parseFloat(place[2]), lng: parseFloat(place[1]) };
+    const center = pb.match(/!3d(-?\d+\.?\d*)!4d(-?\d+\.?\d*)/);
+    if (center) return { lat: parseFloat(center[1]), lng: parseFloat(center[2]) };
+  }
 
   const at = url.match(/@(-?\d+\.?\d*),(-?\d+\.?\d*)/);
   if (at) return { lat: parseFloat(at[1]), lng: parseFloat(at[2]) };
