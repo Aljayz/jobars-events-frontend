@@ -2,6 +2,7 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { createNotification } from "@/utils/notifications/actions";
 import { requireUser } from "@/lib/user";
 
@@ -242,6 +243,28 @@ export async function deleteBooking(formData: FormData) {
 
   await supabase.from("events_bookings").delete().eq("id", id);
   revalidatePath("/dashboard/admin");
+}
+
+export async function updateBusinessSettings(formData: FormData) {
+  const [user, supabase] = await Promise.all([requireUser(), createClient()]);
+  if (!["super-admin", "admin"].includes(user.role)) redirect("/dashboard");
+
+  const { error } = await supabase
+    .from("business_settings")
+    .update({
+      business_name: formData.get("businessName") as string,
+      address: formData.get("address") as string,
+      phone: formData.get("phone") as string,
+      email: formData.get("email") as string,
+      business_hours: formData.get("businessHours") as string,
+      facebook_url: formData.get("facebookUrl") as string,
+      updated_by: user.uid,
+    })
+    .eq("id", 1);
+
+  if (error) redirect("/dashboard/admin/settings?error=" + encodeURIComponent(error.message));
+  revalidatePath("/dashboard/admin/settings");
+  redirect("/dashboard/admin/settings?success=Settings updated");
 }
 
 export async function deleteApprovalItem(formData: FormData) {

@@ -6,14 +6,14 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
-  CardFooter,
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
-import { Mail, KeyRound, Eye, EyeClosed, Phone, User, CalendarDays } from "lucide-react";
+import { Mail, KeyRound, Eye, EyeClosed, Phone, User, CalendarDays, ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { Checkbox } from "../ui/checkbox";
 import {
   Select,
@@ -89,7 +89,7 @@ const countryCodes = [
 ];
 
 const selectClass =
-  "bg-gray-800/90 border-gray-700 text-white h-11! w-full rounded-xl focus:ring-1 focus:ring-yellow-400/20 transition-all";
+  "bg-gray-800/90 border-gray-700 text-white h-12! w-full rounded-xl focus:ring-1 focus:ring-yellow-400/20 transition-all";
 
 type UIAction =
   | { type: "TOGGLE_PASSWORD" }
@@ -156,7 +156,7 @@ function BirthdateSelects({
   const years = Array.from({ length: 100 }, (_, i) => (currentYear - i).toString());
 
   return (
-    <div className="grid grid-cols-[2fr_1fr_1.2fr] gap-2">
+    <div className="grid grid-cols-1 gap-2 sm:grid-cols-[2fr_1fr_1.2fr]">
       <Select
         value={dataForm.birthMonth}
         onValueChange={(value) => dispatch({ type: "SET_FIELD", field: "birthMonth", value })}
@@ -224,7 +224,7 @@ function PasswordInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         required
-        className={`pl-10 pr-10 bg-gray-800/90 border-gray-700 text-white placeholder-gray-600 focus:border-yellow-400/60 focus:ring-1 focus:ring-yellow-400/20 h-11 rounded-xl transition-all ${
+        className={`pl-10 pr-10 bg-gray-800/90 border-gray-700 text-white placeholder-gray-600 focus:border-yellow-400/60 focus:ring-1 focus:ring-yellow-400/20 h-12 rounded-xl transition-all ${
           hasError ? "border-red-500/60" : ""
         }`}
       />
@@ -236,6 +236,30 @@ function PasswordInput({
       >
         {showPassword ? <EyeClosed className="size-4" /> : <Eye className="size-4" />}
       </button>
+    </div>
+  );
+}
+
+function StepIndicator({ current, total }: { current: number; total: number }) {
+  return (
+    <div className="flex items-center justify-center gap-2 mb-6">
+      {Array.from({ length: total }, (_, i) => {
+        const step = i + 1;
+        const isActive = step === current;
+        const isCompleted = step < current;
+        return (
+          <div
+            key={step}
+            className={`rounded-full transition-all duration-300 ${
+              isActive
+                ? "w-8 h-2 bg-yellow-400"
+                : isCompleted
+                  ? "w-2 h-2 bg-yellow-400/60"
+                  : "w-2 h-2 bg-gray-700"
+            }`}
+          />
+        );
+      })}
     </div>
   );
 }
@@ -270,7 +294,10 @@ function SignUp() {
     undefined,
   );
 
-  const [ui, dispatchUI] = React.useReducer(uiReducer, INITIAL_UI);
+  const [ui, dispatchUI] = useReducer(uiReducer, INITIAL_UI);
+  const [step, setStep] = React.useState(1);
+  const [direction, setDirection] = React.useState<"forward" | "back">("forward");
+  const hasNavigated = React.useRef(false);
 
   const checkPasswordsMatch = () => dataForm.password === dataForm.confirmPassword;
 
@@ -290,8 +317,28 @@ function SignUp() {
     dataForm.firstName &&
     dataForm.lastname;
 
-  return (
-    <Card className="w-full border-gray-800/60 bg-gray-900/60 backdrop-blur-xl shadow-2xl shadow-black/30 rounded-2xl overflow-hidden">
+  const step1Valid = dataForm.firstName && dataForm.lastname;
+  const step2Valid = isValidEmail && (!dataForm.phoneNumber || isValidPhone);
+
+  const handleNext = () => {
+    hasNavigated.current = true;
+    setDirection("forward");
+    setStep((s) => Math.min(s + 1, 3));
+  };
+
+  const handleBack = () => {
+    hasNavigated.current = true;
+    setDirection("back");
+    setStep((s) => Math.max(s - 1, 1));
+  };
+
+  const slideClass = hasNavigated.current
+    ? direction === "forward" ? "animate-slide-in-right" : "animate-slide-in-left"
+    : "";
+
+  // --- Desktop form (single page, unchanged) ---
+  const desktopForm = (
+    <>
       <div className="h-0.5 bg-gradient-to-r from-yellow-400/0 via-yellow-400 to-yellow-400/0" />
       <CardHeader className="px-6 pt-5 pb-1">
         <CardTitle className="text-xl font-bold text-white">Create Account</CardTitle>
@@ -504,7 +551,334 @@ function SignUp() {
           </CardFooter>
         </form>
       </CardContent>
-    </Card>
+    </>
+  );
+
+  // --- Mobile form (wizard) ---
+  const mobileForm = (
+    <div className="px-4 pb-4 pt-0 flex flex-col">
+      <StepIndicator current={step} total={3} />
+
+      {state?.error && (
+        <div className="rounded-xl bg-red-950/50 border border-red-900/50 px-4 py-3 text-sm text-red-400 flex items-center gap-2 mb-4">
+          <span className="size-1.5 rounded-full bg-red-500 shrink-0" />
+          {state.error}
+        </div>
+      )}
+      {state?.message && (
+        <div className="rounded-xl bg-green-950/50 border border-green-900/50 px-4 py-3 text-sm text-green-400 flex items-center gap-2 mb-4">
+          <span className="size-1.5 rounded-full bg-green-500 shrink-0" />
+          {state.message}
+        </div>
+      )}
+
+      <form action={action} id="signup-form" className="flex-1 flex flex-col">
+        <div className="relative overflow-hidden flex-1">
+          {/* Step 1: Personal Info */}
+          {step === 1 && (
+            <div key="step1" className={`${slideClass} h-full flex flex-col`}>
+              <div className="space-y-4 flex-1">
+                <div className="flex items-start gap-3">
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-yellow-400/10 text-yellow-400">
+                    <User className="size-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold text-white">Personal Info</h2>
+                    <p className="text-sm text-gray-500">Tell us about yourself</p>
+                  </div>
+                </div>
+
+                <div className="grid gap-1.5">
+                  <Label className="text-sm font-medium text-gray-300">First Name</Label>
+                  <div className="relative group">
+                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-gray-500 group-focus-within:text-yellow-400 transition-colors z-10" />
+                    <Input
+                      value={dataForm.firstName}
+                      required
+                      onChange={(e) => dispatch({ type: "SET_FIELD", field: "firstName", value: e.target.value })}
+                      placeholder="John"
+                      className="pl-10 bg-gray-800/90 border-gray-700 text-white placeholder-gray-600 focus:border-yellow-400/60 focus:ring-1 focus:ring-yellow-400/20 h-12 rounded-xl transition-all"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid gap-1.5">
+                  <Label className="text-sm font-medium text-gray-300">Last Name</Label>
+                  <Input
+                    value={dataForm.lastname}
+                    required
+                    onChange={(e) => dispatch({ type: "SET_FIELD", field: "lastname", value: e.target.value })}
+                    placeholder="Doe"
+                    className="bg-gray-800/90 border-gray-700 text-white placeholder-gray-600 focus:border-yellow-400/60 focus:ring-1 focus:ring-yellow-400/20 h-12 rounded-xl transition-all"
+                  />
+                </div>
+
+                <div className="grid gap-1.5">
+                  <Label className="text-sm font-medium text-gray-300">Birthdate</Label>
+                  <BirthdateSelects dataForm={dataForm} dispatch={dispatch} />
+                </div>
+              </div>
+
+              <div className="pt-6 pb-2 space-y-2">
+                <Button
+                  type="button"
+                  onClick={handleNext}
+                  disabled={!step1Valid}
+                  className="w-full h-12 rounded-xl text-black font-semibold bg-yellow-400 hover:bg-yellow-500 active:bg-yellow-600 disabled:bg-gray-700 disabled:text-gray-400 transition-all cursor-pointer disabled:cursor-not-allowed"
+                >
+                  <span className="flex items-center gap-2">
+                    Next
+                    <ArrowRight className="size-4" />
+                  </span>
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Step 2: Contact Info */}
+          {step === 2 && (
+            <div key="step2" className={`${slideClass} h-full flex flex-col`}>
+              <div className="space-y-4 flex-1">
+                <div className="flex items-start gap-3">
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-yellow-400/10 text-yellow-400">
+                    <Mail className="size-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold text-white">Contact Info</h2>
+                    <p className="text-sm text-gray-500">How we can reach you</p>
+                  </div>
+                </div>
+
+                <div className="grid gap-1.5">
+                  <Label className="text-sm font-medium text-gray-300">Phone</Label>
+                  <div className="flex">
+                    <Select
+                      value={dataForm.phoneCountry}
+                      onValueChange={(value) => dispatch({ type: "SET_FIELD", field: "phoneCountry", value })}
+                    >
+                      <SelectTrigger className="w-[100px] rounded-l-xl rounded-r-none bg-gray-800/90 border-gray-700 border-r-0 text-white h-12! focus:ring-1 focus:ring-yellow-400/20 transition-all">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-gray-800 border-gray-700 text-white max-h-60">
+                        {countryCodes.map((c) => (
+                          <SelectItem key={c.code} value={c.code}>{c.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <div className="relative flex-1 group">
+                      <Phone className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-gray-500 group-focus-within:text-yellow-400 transition-colors z-10" />
+                      <Input
+                        id="phone"
+                        type="tel"
+                        value={formattedPhone}
+                        onChange={(e) => {
+                          const digits = e.target.value.replace(/\D/g, "");
+                          dispatch({ type: "SET_FIELD", field: "phoneNumber", value: digits });
+                        }}
+                        placeholder="968 666 6783"
+                        className={`pl-10 rounded-l-none rounded-r-xl bg-gray-800/90 border-gray-700 text-white placeholder-gray-600 focus:border-yellow-400/60 focus:ring-1 focus:ring-yellow-400/20 h-12 transition-all ${
+                          dataForm.phoneNumber && !isValidPhone ? "border-red-500/60" : ""
+                        }`}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid gap-1.5">
+                  <Label htmlFor="email-mob" className="text-sm font-medium text-gray-300">Email</Label>
+                  <div className="relative group">
+                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-gray-500 group-focus-within:text-yellow-400 transition-colors z-10" />
+                    <Input
+                      id="email-mob"
+                      type="email"
+                      value={dataForm.email}
+                      onChange={(e) => dispatch({ type: "SET_FIELD", field: "email", value: e.target.value })}
+                      placeholder="example@gmail.com"
+                      required
+                      className={`pl-10 pr-4 bg-gray-800/90 border-gray-700 text-white placeholder-gray-600 focus:border-yellow-400/60 focus:ring-1 focus:ring-yellow-400/20 h-12 rounded-xl transition-all ${
+                        dataForm.email && !isValidEmail ? "border-red-500/60" : ""
+                      }`}
+                    />
+                  </div>
+                  {dataForm.email && !isValidEmail && (
+                    <p className="text-xs text-red-400 flex items-center gap-1">
+                      <span className="size-1 rounded-full bg-red-500 shrink-0" />
+                      Enter a valid email address
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="pt-6 pb-2 space-y-2">
+                <Button
+                  type="button"
+                  onClick={handleNext}
+                  disabled={!step2Valid}
+                  className="w-full h-12 rounded-xl text-black font-semibold bg-yellow-400 hover:bg-yellow-500 active:bg-yellow-600 disabled:bg-gray-700 disabled:text-gray-400 transition-all cursor-pointer disabled:cursor-not-allowed"
+                >
+                  <span className="flex items-center gap-2">
+                    Next
+                    <ArrowRight className="size-4" />
+                  </span>
+                </Button>
+                <button
+                  type="button"
+                  onClick={handleBack}
+                  className="w-full text-center text-sm text-gray-500 hover:text-gray-300 transition-colors py-1"
+                >
+                  <span className="flex items-center justify-center gap-1">
+                    <ArrowLeft className="size-3.5" />
+                    Back
+                  </span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Step 3: Security */}
+          {step === 3 && (
+            <div key="step3" className={`${slideClass} h-full flex flex-col`}>
+              <div className="space-y-4 flex-1">
+                <div className="flex items-start gap-3">
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-yellow-400/10 text-yellow-400">
+                    <KeyRound className="size-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold text-white">Security</h2>
+                    <p className="text-sm text-gray-500">Set up your password</p>
+                  </div>
+                </div>
+
+                <div className="grid gap-1.5">
+                  <Label htmlFor="password-mob" className="text-sm font-medium text-gray-300">Password</Label>
+                  <PasswordInput
+                    id="password-mob"
+                    value={dataForm.password}
+                    onChange={(value) => dispatch({ type: "SET_FIELD", field: "password", value })}
+                    showPassword={ui.showPassword}
+                    toggleShow={() => dispatchUI({ type: "TOGGLE_PASSWORD" })}
+                  />
+                  {dataForm.password && (
+                    <div className="space-y-1.5">
+                      <div className="flex gap-1">
+                        {[1, 2, 3, 4].map((i) => (
+                          <div
+                            key={i}
+                            className={`h-1 flex-1 rounded-full transition-all duration-500 ease-out ${
+                              i <= pwStrength.score ? pwStrength.color : "bg-gray-700"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <p className={`text-xs ${pwStrength.score <= 1 ? "text-red-400" : "text-gray-500"} flex items-center gap-1`}>
+                        <span className={`size-1 rounded-full shrink-0 ${pwStrength.label ? pwStrength.color : "bg-gray-600"}`} />
+                        {pwStrength.label}
+                        {pwStrength.score >= 2 && pwStrength.score < 4 && (
+                          <span className="text-gray-600"> &ndash; add uppercase, number, or symbol</span>
+                        )}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="grid gap-1.5">
+                  <Label htmlFor="confirm-password-mob" className="text-sm font-medium text-gray-300">Confirm Password</Label>
+                  <PasswordInput
+                    id="confirm-password-mob"
+                    value={dataForm.confirmPassword}
+                    onChange={(value) => dispatch({ type: "SET_FIELD", field: "confirmPassword", value })}
+                    showPassword={ui.showConfirmPassword}
+                    toggleShow={() => dispatchUI({ type: "TOGGLE_CONFIRM_PASSWORD" })}
+                    hasError={!!(dataForm.password && dataForm.confirmPassword && !checkPasswordsMatch())}
+                  />
+                  {dataForm.password && dataForm.confirmPassword && !checkPasswordsMatch() && (
+                    <p className="text-xs text-red-400 flex items-center gap-1">
+                      <span className="size-1 rounded-full bg-red-500 shrink-0" />
+                      Passwords do not match
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-gray-800/30 border border-gray-800/50">
+                  <Checkbox
+                    id="terms-mob"
+                    checked={ui.acceptedTerms}
+                    onCheckedChange={(checked) => dispatchUI({ type: "SET_ACCEPTED_TERMS", value: !!checked })}
+                    disabled={!ui.termsViewed}
+                    className="mt-0.5 border-gray-600 data-[state=checked]:bg-yellow-400 data-[state=checked]:border-yellow-400 data-[state=checked]:text-black shrink-0"
+                  />
+                  <Label htmlFor="terms-mob" className="text-xs text-gray-500 font-normal leading-relaxed cursor-pointer select-none">
+                    I have read and agree to the{" "}
+                    <Dialog
+                      open={ui.dialogOpen}
+                      onOpenChange={(open) => {
+                        dispatchUI({ type: "SET_DIALOG_OPEN", value: open });
+                        if (open) dispatchUI({ type: "SET_TERMS_VIEWED" });
+                      }}
+                    >
+                      <DialogTrigger asChild>
+                        <button type="button" className="text-yellow-400 hover:text-yellow-300 underline underline-offset-2 transition-colors font-medium">
+                          Terms and Conditions
+                        </button>
+                      </DialogTrigger>
+                      <DialogContent className="bg-gray-900 border-gray-800 text-white p-6 rounded-2xl max-w-2xl w-[95vw]">
+                        <TermConditionDialog
+                          onAccept={() => dispatchUI({ type: "ACCEPT_TERMS_AND_CLOSE" })}
+                        />
+                      </DialogContent>
+                    </Dialog>
+                  </Label>
+                </div>
+              </div>
+
+              <div className="pt-6 pb-2 space-y-2">
+                <Button
+                  type="submit"
+                  disabled={!canSubmit}
+                  className="w-full h-12 rounded-xl text-black font-semibold bg-yellow-400 hover:bg-yellow-500 active:bg-yellow-600 disabled:bg-gray-700 disabled:text-gray-400 transition-all cursor-pointer disabled:cursor-not-allowed"
+                >
+                  {pending ? (
+                    <span className="flex items-center gap-2">
+                      <span className="size-4 rounded-full border-2 border-black/30 border-t-black animate-spin" />
+                      Creating account...
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-2">
+                      <Check className="size-4" />
+                      Create Account
+                    </span>
+                  )}
+                </Button>
+                <button
+                  type="button"
+                  onClick={handleBack}
+                  className="w-full text-center text-sm text-gray-500 hover:text-gray-300 transition-colors py-1"
+                >
+                  <span className="flex items-center justify-center gap-1">
+                    <ArrowLeft className="size-3.5" />
+                    Back
+                  </span>
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </form>
+    </div>
+  );
+
+  return (
+    <>
+      {/* Mobile: flat wizard */}
+      <div className="block sm:hidden bg-gray-900/30">
+        {mobileForm}
+      </div>
+
+      {/* Desktop: card layout */}
+      <Card className="hidden sm:block w-full border-gray-800/60 bg-gray-900/60 backdrop-blur-xl shadow-2xl shadow-black/30 rounded-2xl overflow-hidden">
+        {desktopForm}
+      </Card>
+    </>
   );
 }
 

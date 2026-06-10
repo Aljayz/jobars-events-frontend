@@ -190,6 +190,26 @@
   }
 }
 
+/* Step wizard animations */
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(40px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes slide-in-left {
+  from { opacity: 0; transform: translateX(-40px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes slide-out-right {
+  from { opacity: 1; transform: translateX(0); }
+  to { opacity: 0; transform: translateX(-40px); }
+}
+@keyframes slide-out-left {
+  from { opacity: 1; transform: translateX(0); }
+  to { opacity: 0; transform: translateX(40px); }
+}
+.animate-slide-in-right { animation: slide-in-right 0.3s ease-out; }
+.animate-slide-in-left { animation: slide-in-left 0.3s ease-out; }
+
 /* Hide scrollbar for mobile nav when open */
 body.no-scroll {
   overflow: hidden;

@@ -30,7 +30,8 @@ const adminNav: NavItem[] = [
   { href: "/dashboard/admin/clients", label: "Clients", icon: "Users" },
   { href: "/chat", label: "Event Chat", icon: "MessageSquare", matchSubPaths: true },
   { href: "/dashboard/notifications", label: "Notifications", icon: "Bell" },
-  { href: "/dashboard/settings", label: "Settings", icon: "Settings" },
+  { href: "/dashboard/admin/settings", label: "Business Settings", icon: "Settings" },
+  { href: "/dashboard/settings", label: "Account", icon: "User" },
 ];
 
 const hrNav: NavItem[] = [

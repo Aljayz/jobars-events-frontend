@@ -5,6 +5,7 @@ import Link from "next/link"
 import { MapPin, Phone, Mail, Target, Eye, Heart, Users } from "lucide-react"
 import { PageHero } from "@/components/reusable/page-hero"
 import { TeamGrid } from "@/components/section/team-grid"
+import { getCachedBusinessSettings } from "@/lib/business"
 
 export const metadata: Metadata = {
   title: "About Us | Jobars Events",
@@ -29,7 +30,8 @@ const values = [
   },
 ]
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const settings = await getCachedBusinessSettings()
   return (
     <main className="min-h-screen bg-gray-950 pt-24">
       <PageHero
@@ -158,9 +160,9 @@ export default function AboutPage() {
             Have an event coming up? We&apos;d love to hear about it. Reach out and let&apos;s start planning.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-6 text-sm text-gray-400">
-            <span className="flex items-center gap-2"><MapPin className="size-4 text-yellow-400" /> Bayugan City, Agusan del Sur</span>
-            <span className="flex items-center gap-2"><Phone className="size-4 text-yellow-400" /> +63 968 666 6783</span>
-            <span className="flex items-center gap-2"><Mail className="size-4 text-yellow-400" /> jobars.info@gmail.com</span>
+            <span className="flex items-center gap-2"><MapPin className="size-4 text-yellow-400" /> {settings.address}</span>
+            <span className="flex items-center gap-2"><Phone className="size-4 text-yellow-400" /> {settings.phone}</span>
+            <span className="flex items-center gap-2"><Mail className="size-4 text-yellow-400" /> {settings.email}</span>
           </div>
           <Link
             href="/contact"

@@ -1,0 +1,37 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"main": ".open-next/worker.js",
+	"name": "jobars-events",
+	"compatibility_date": "2026-06-09",
+	"compatibility_flags": [
+		"nodejs_compat",
+		"global_fetch_strictly_public"
+	],
+	"assets": {
+		"directory": ".open-next/assets",
+		"binding": "ASSETS"
+	},
+	"vars": {
+		"NEXT_PUBLIC_SUPABASE_URL": "https://pvkkaecnlphgsyefvxlm.supabase.co",
+		"NEXT_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB2a2thZWNubHBoZ3N5ZWZ2eGxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwMTUyNTMsImV4cCI6MjA5NTU5MTI1M30.2KJPpkjxqDF1hvOZ4B_VGseyVKRBCgk20m9STpDB0WI",
+		"NEXT_PUBLIC_FIREBASE_API_KEY": "AIzaSyDgmMvFcKh0FXxkx5H9XUlex6TZRxkufxE",
+		"NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN": "jobars-events-3df9c.firebaseapp.com",
+		"NEXT_PUBLIC_FIREBASE_PROJECT_ID": "jobars-events-3df9c",
+		"NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET": "jobars-events-3df9c.firebasestorage.app",
+		"NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "296269006990",
+		"NEXT_PUBLIC_FIREBASE_APP_ID": "1:296269006990:web:44458bb6d0e0a3113da1df"
+	},
+	"services": [
+		{
+			// Self-reference service binding, the service name must match the worker name
+			// see https://opennext.js.org/cloudflare/caching
+			"binding": "WORKER_SELF_REFERENCE",
+			"service": "jobars-events"
+		}
+	],
+	"images": {
+		// Enable image optimization
+		// see https://opennext.js.org/cloudflare/howtos/image
+		"binding": "IMAGES"
+	}
+}

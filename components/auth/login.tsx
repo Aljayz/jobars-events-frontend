@@ -77,18 +77,18 @@ function Login() {
     }
   };
 
-  return (
-    <Card className="w-full border-gray-800/60 bg-gray-900/60 backdrop-blur-xl shadow-2xl shadow-black/30 rounded-2xl overflow-hidden">
-      <div className="h-0.5 bg-gradient-to-r from-yellow-400/0 via-yellow-400 to-yellow-400/0" />
-      <CardHeader className="px-6 pt-5 pb-2">
+  const form = (
+    <>
+      <div className="h-0.5 bg-gradient-to-r from-yellow-400/0 via-yellow-400 to-yellow-400/0 sm:block hidden" />
+      <CardHeader className="px-4 sm:px-6 pt-4 sm:pt-5 pb-2">
         <CardTitle className="text-xl font-bold text-white">Welcome Back</CardTitle>
         <CardDescription className="text-gray-500 text-sm">
           Sign in to your account to continue.
         </CardDescription>
       </CardHeader>
-      <CardContent className="px-6 pb-2">
-        <form action={action}>
-          <div className="flex flex-col gap-5">
+      <CardContent className="px-4 sm:px-6">
+        <form action={action} id="login-form">
+          <div className="flex flex-col gap-4 sm:gap-5">
             {state?.error && (
               <div className="rounded-xl bg-red-950/50 border border-red-900/50 px-4 py-3 text-sm text-red-400 flex items-center gap-2">
                 <span className="size-1.5 rounded-full bg-red-500 shrink-0" />
@@ -105,7 +105,7 @@ function Login() {
                   type="email"
                   placeholder="example@gmail.com"
                   required
-                  className="pl-10 pr-4 bg-gray-800/90 border-gray-700 text-white placeholder-gray-600 focus:border-yellow-400/60 focus:ring-1 focus:ring-yellow-400/20 h-11 rounded-xl transition-all"
+                  className="pl-10 pr-4 bg-gray-800/90 border-gray-700 text-white placeholder-gray-600 focus:border-yellow-400/60 focus:ring-1 focus:ring-yellow-400/20 h-12 rounded-xl transition-all"
                 />
               </div>
             </div>
@@ -123,7 +123,7 @@ function Login() {
                   name="password"
                   type={showPassword ? "text" : "password"}
                   required
-                  className="pl-10 pr-10 bg-gray-800/90 border-gray-700 text-white placeholder-gray-600 focus:border-yellow-400/60 focus:ring-1 focus:ring-yellow-400/20 h-11 rounded-xl transition-all"
+                  className="pl-10 pr-10 bg-gray-800/90 border-gray-700 text-white placeholder-gray-600 focus:border-yellow-400/60 focus:ring-1 focus:ring-yellow-400/20 h-12 rounded-xl transition-all"
                 />
                 <button
                   type="button"
@@ -136,11 +136,11 @@ function Login() {
               </div>
             </div>
           </div>
-          <CardFooter className="flex-col gap-4 px-0 pb-0 pt-6">
+          <div className="pt-6">
             <Button
               type="submit"
               disabled={pending}
-              className="w-full h-11 rounded-xl text-black font-semibold bg-yellow-400 hover:bg-yellow-500 hover:shadow-lg hover:shadow-yellow-400/20 disabled:bg-gray-700 disabled:text-gray-400 transition-all cursor-pointer disabled:cursor-not-allowed"
+              className="w-full h-12 rounded-xl text-black font-semibold bg-yellow-400 hover:bg-yellow-500 active:bg-yellow-600 disabled:bg-gray-700 disabled:text-gray-400 transition-all cursor-pointer disabled:cursor-not-allowed"
             >
               {pending ? (
                 <span className="flex items-center gap-2">
@@ -151,10 +151,10 @@ function Login() {
                 "Login"
               )}
             </Button>
-          </CardFooter>
+          </div>
         </form>
       </CardContent>
-      <div className="relative mx-6">
+      <div className="relative mx-4 sm:mx-6 my-5">
         <div className="absolute inset-0 flex items-center">
           <span className="w-full border-t border-gray-800" />
         </div>
@@ -162,13 +162,13 @@ function Login() {
           <span className="bg-gray-900/60 px-3 text-gray-600">Or continue with</span>
         </div>
       </div>
-      <div className="px-6 pb-6 pt-4">
+      <div className="px-4 sm:px-6 pb-4 sm:pb-6">
         <Button
           type="button"
           variant="outline"
           disabled={googlePending}
           onClick={handleGoogleSignIn}
-          className="w-full h-11 rounded-xl bg-transparent border-gray-700/60 text-gray-300 hover:bg-gray-800/50 hover:text-white hover:border-gray-600 transition-all cursor-pointer"
+          className="w-full h-12 rounded-xl bg-transparent border-gray-700/60 text-gray-300 hover:bg-gray-800/50 hover:text-white hover:border-gray-600 transition-all cursor-pointer"
         >
           {googlePending ? (
             <span className="flex items-center gap-2">
@@ -183,7 +183,21 @@ function Login() {
           )}
         </Button>
       </div>
-    </Card>
+    </>
+  );
+
+  return (
+    <>
+      {/* Mobile: flat layout */}
+      <div className="block sm:hidden bg-gray-900/30">
+        {form}
+      </div>
+
+      {/* Desktop: card layout */}
+      <Card className="hidden sm:block w-full border-gray-800/60 bg-gray-900/60 backdrop-blur-xl shadow-2xl shadow-black/30 rounded-2xl overflow-hidden">
+        {form}
+      </Card>
+    </>
   );
 }
 

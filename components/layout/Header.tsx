@@ -100,7 +100,7 @@ function Header() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => push('/book')}
+            onClick={() => push('/auth/sign-up')}
             className={cn(
               'transition-colors',
               isTransparent
@@ -147,7 +147,7 @@ function Header() {
               size="sm"
               className="justify-start text-gray-300 hover:text-white hover:bg-gray-800"
               onClick={() => {
-                push('/book')
+                push('/auth/sign-up')
                 setIsMenuOpen(false)
               }}
             >

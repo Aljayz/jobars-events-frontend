@@ -64,6 +64,7 @@ export async function createSessionCookie(idToken: string): Promise<string> {
   if (!user) throw new Error("Invalid ID token");
   const key = getSessionSigningKey();
   return await new SignJWT({ ...user } as unknown as JWTPayload)
+    .setProtectedHeader({ alg: "HS256" })
     .setSubject(user.uid)
     .setIssuedAt()
     .setExpirationTime("14d")

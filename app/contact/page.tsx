@@ -3,6 +3,7 @@ import { Suspense } from "react"
 import { PageHero } from "@/components/reusable/page-hero"
 import { submitContact } from "./actions"
 import FlashBanner from "@/components/ui/flash-banner"
+import { getCachedBusinessSettings } from "@/lib/business"
 import { MapPin, Phone, Mail, Clock, Send, User, Tag } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -13,7 +14,8 @@ export const metadata: Metadata = {
   description: "Get in touch with Jobars Events for inquiries about our event services in Bayugan City, Agusan del Sur.",
 }
 
-export default function ContactPage() {
+export default async function ContactPage() {
+  const settings = await getCachedBusinessSettings()
   return (
     <main className="min-h-screen bg-gray-950 pt-24">
       <PageHero
@@ -41,28 +43,28 @@ export default function ContactPage() {
                     <MapPin className="mt-0.5 size-5 shrink-0 text-yellow-400" />
                     <div>
                       <p className="text-sm font-medium text-white">Address</p>
-                      <p className="text-sm text-gray-400">Bayugan City, Agusan del Sur, Philippines</p>
+                      <p className="text-sm text-gray-400">{settings.address}</p>
                     </div>
                   </li>
                   <li className="flex items-start gap-3">
                     <Phone className="mt-0.5 size-5 shrink-0 text-yellow-400" />
                     <div>
                       <p className="text-sm font-medium text-white">Phone</p>
-                      <p className="text-sm text-gray-400">+63 968 666 6783</p>
+                      <p className="text-sm text-gray-400">{settings.phone}</p>
                     </div>
                   </li>
                   <li className="flex items-start gap-3">
                     <Mail className="mt-0.5 size-5 shrink-0 text-yellow-400" />
                     <div>
                       <p className="text-sm font-medium text-white">Email</p>
-                      <p className="text-sm text-gray-400">jobars.info@gmail.com</p>
+                      <p className="text-sm text-gray-400">{settings.email}</p>
                     </div>
                   </li>
                   <li className="flex items-start gap-3">
                     <Clock className="mt-0.5 size-5 shrink-0 text-yellow-400" />
                     <div>
                       <p className="text-sm font-medium text-white">Business Hours</p>
-                      <p className="text-sm text-gray-400">Monday to Saturday, 8:00 AM to 6:00 PM</p>
+                      <p className="text-sm text-gray-400">{settings.business_hours}</p>
                     </div>
                   </li>
                 </ul>
@@ -71,7 +73,7 @@ export default function ContactPage() {
               <div className="rounded-xl border border-gray-800 bg-gray-900/50 p-6 animate-fade-in-up stagger-2">
                 <h2 className="mb-3 text-lg font-bold text-white">Follow Us</h2>
                 <a
-                  href="https://www.facebook.com/profile.php?id=100063642080742"
+                  href={settings.facebook_url}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-yellow-400 transition-colors"
