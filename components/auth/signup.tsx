@@ -288,8 +288,11 @@ function SignUp() {
         });
         window.location.href = `/auth/verify-email?email=${encodeURIComponent(dataForm.email)}`;
         return {};
-      } catch {
-        return { message: "Account created. Please sign in." };
+      } catch (error) {
+        console.error("Verification email send failed:", error);
+        const msg = error instanceof Error ? error.message : "Verification email could not be sent";
+        window.location.href = `/auth/verify-email?email=${encodeURIComponent(dataForm.email)}&error=${encodeURIComponent(msg)}`;
+        return {};
       }
     },
     undefined,

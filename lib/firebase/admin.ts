@@ -17,7 +17,7 @@ function decodeBase64(str: string): string {
   return Buffer.from(str, "base64").toString("utf-8");
 }
 
-function getAdminAuth() {
+export function getAdminAuth() {
   const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
   if (!raw) throw new Error("FIREBASE_SERVICE_ACCOUNT is not set");
   if (!getApps().length) {

@@ -2,10 +2,18 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { createSessionCookie, verifyIdToken, adminCreateUser, adminSetCustomClaims, adminRevokeRefreshTokens } from "@/lib/firebase/admin";
+import { createSessionCookie, verifyIdToken, adminCreateUser, adminSetCustomClaims, adminRevokeRefreshTokens, getAdminAuth } from "@/lib/firebase/admin";
 import { createClient } from "@/utils/supabase/server";
 
 const SESSION_COOKIE = "__session";
+
+export async function generateVerificationLink(email: string) {
+  const origin = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  return getAdminAuth().generateEmailVerificationLink(email, {
+    url: `${origin}/auth/verify-email`,
+    handleCodeInApp: true,
+  });
+}
 
 async function syncProfile(idToken: string) {
   const user = await verifyIdToken(idToken);
